@@ -1,121 +1,280 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useCallback, useEffect, useState } from 'react'
+import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
+import CreateTaskPage from './pages/CreateTaskPage'
+import DashboardPage from './pages/DashboardPage'
+import TaskDetailPage from './pages/TaskDetailPage'
+import TaskListPage from './pages/TaskListPage'
+import { getCatalogue } from './services/catalogue'
+import {
+  createEvidence,
+  generateEvidence,
+  reviewAcceptanceCriterionSuggestion,
+  reviewKsbSuggestion,
+  updateEvidence,
+} from './services/evidence'
+import { getProgress } from './services/progress'
+import { createTask, getTask, getTasks } from './services/tasks'
 import './App.css'
 
+const blankTask = { title: '', rawNotes: '' }
+
+function normaliseEvidence(evidence) {
+  return {
+    ...evidence,
+    rawNotes: evidence.rawNotes ?? evidence.raw_notes ?? '',
+    ksbs: evidence.ksbs ?? [],
+    acceptanceCriteria: evidence.acceptanceCriteria ?? [],
+  }
+}
+
+function normaliseTask(task) {
+  return {
+    ...task,
+    rawNotes: task.rawNotes ?? task.raw_notes ?? '',
+    evidence: (task.evidence ?? []).map(normaliseEvidence),
+  }
+}
+
+function TaskDetailRoute({ task, loading, error, ...pageProps }) {
+  const { taskId } = useParams()
+
+  if (!task || String(task.id) !== taskId) {
+    return (
+      <main className="app-shell">
+        {error ? <p className="message error" role="alert">{error}</p> : <p className="loading">{loading ? 'Loading task…' : 'Task not found.'}</p>}
+      </main>
+    )
+  }
+
+  return <TaskDetailPage task={task} error={error} {...pageProps} />
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [tasks, setTasks] = useState([])
+  const [selectedTask, setSelectedTask] = useState(null)
+  const [catalogue, setCatalogue] = useState({ ksbs: [], acceptanceCriteria: [] })
+  const [progress, setProgress] = useState(null)
+  const [taskForm, setTaskForm] = useState(blankTask)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+
+  const loadTask = useCallback(async (taskId) => {
+    setLoading(true)
+    setError('')
+    setNotice('')
+
+    try {
+      setSelectedTask(normaliseTask(await getTask(taskId)))
+    } catch (requestError) {
+      setSelectedTask(null)
+      setError(requestError.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  async function loadInitialData() {
+    setLoading(true)
+    setError('')
+
+    try {
+      const [taskList, loadedCatalogue, progressResult] = await Promise.all([
+        getTasks(),
+        getCatalogue(),
+        getProgress(),
+      ])
+      setTasks(taskList)
+      setCatalogue(loadedCatalogue)
+      setProgress(progressResult)
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function loadTasks() {
+    setTasks(await getTasks())
+  }
+
+  useEffect(() => {
+    void Promise.resolve().then(loadInitialData)
+  }, [])
+
+  useEffect(() => {
+    const taskPath = location.pathname.match(/^\/tasks\/(\d+)$/)
+    if (taskPath && String(selectedTask?.id) !== taskPath[1]) {
+      void Promise.resolve().then(() => loadTask(taskPath[1]))
+    }
+  }, [location.pathname, loadTask, selectedTask?.id])
+
+  async function handleCreateTask(event) {
+    event.preventDefault()
+    setSaving(true)
+    setError('')
+
+    try {
+      const task = await createTask(taskForm)
+      setTaskForm(blankTask)
+      await loadTasks()
+      navigate(`/tasks/${task.id}`)
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function replaceEvidence(updatedEvidence) {
+    const nextEvidence = normaliseEvidence(updatedEvidence)
+    const includesKsbs = Object.hasOwn(updatedEvidence, 'ksbs')
+    const includesAcceptanceCriteria = Object.hasOwn(updatedEvidence, 'acceptanceCriteria')
+
+    setSelectedTask((task) => ({
+      ...task,
+      evidence: task.evidence.map((item) => (
+        String(item.id) === String(nextEvidence.id)
+          ? {
+              ...item,
+              ...nextEvidence,
+              ksbs: includesKsbs ? nextEvidence.ksbs : item.ksbs,
+              acceptanceCriteria: includesAcceptanceCriteria ? nextEvidence.acceptanceCriteria : item.acceptanceCriteria,
+            }
+          : item
+      )),
+    }))
+  }
+
+  async function handleCreateEvidence() {
+    setSaving(true)
+    setError('')
+
+    try {
+      const evidence = await createEvidence(selectedTask.id, {
+        title: `Evidence: ${selectedTask.title}`,
+        rawNotes: selectedTask.rawNotes,
+      })
+      setSelectedTask((task) => ({ ...task, evidence: [normaliseEvidence(evidence), ...task.evidence] }))
+      setTasks((items) => items.map((item) => (
+        String(item.id) === String(selectedTask.id)
+          ? { ...item, evidence_count: Number(item.evidence_count) + 1 }
+          : item
+      )))
+      setNotice('Evidence created. Review its title, then generate STAR when ready.')
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleSaveEvidence(evidence) {
+    setSaving(true)
+    setError('')
+
+    try {
+      const savedEvidence = await updateEvidence(evidence.id, {
+        title: evidence.title,
+        situation: evidence.situation || null,
+        task: evidence.task || null,
+        action: evidence.action || null,
+        result: evidence.result || null,
+      })
+      replaceEvidence(savedEvidence)
+      setNotice('Evidence saved.')
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function attachCatalogueDescription(suggestion, type) {
+    const items = type === 'ksb' ? catalogue.ksbs : catalogue.acceptanceCriteria
+    const match = items.find((item) => item.code === suggestion.code)
+
+    return {
+      ...suggestion,
+      id: type === 'ksb' ? suggestion.ksbId : suggestion.acceptanceCriterionId,
+      description: match?.description,
+    }
+  }
+
+  async function handleGenerateEvidence(evidence) {
+    setSaving(true)
+    setError('')
+    setNotice('')
+
+    try {
+      const generated = await generateEvidence(evidence.id)
+      const nextEvidence = normaliseEvidence(generated.evidence)
+      nextEvidence.ksbs = generated.suggestions.ksbs.map((suggestion) => attachCatalogueDescription(suggestion, 'ksb'))
+      nextEvidence.acceptanceCriteria = generated.suggestions.acceptanceCriteria.map((suggestion) => attachCatalogueDescription(suggestion, 'ac'))
+      replaceEvidence(nextEvidence)
+      setNotice('STAR evidence and AI suggestions are ready for your review.')
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleReviewSuggestion(evidence, type, suggestion, reviewStatus) {
+    setSaving(true)
+    setError('')
+
+    try {
+      if (type === 'ksb') {
+        await reviewKsbSuggestion(evidence.id, suggestion.id, reviewStatus)
+      } else {
+        await reviewAcceptanceCriterionSuggestion(evidence.id, suggestion.id, reviewStatus)
+      }
+
+      setSelectedTask((task) => ({
+        ...task,
+        evidence: task.evidence.map((item) => {
+          if (String(item.id) !== String(evidence.id)) return item
+          const collection = type === 'ksb' ? 'ksbs' : 'acceptanceCriteria'
+          return {
+            ...item,
+            [collection]: item[collection].map((entry) => (
+              String(entry.id) === String(suggestion.id) ? { ...entry, reviewStatus } : entry
+            )),
+          }
+        }),
+      }))
+      setNotice(`${suggestion.code} was ${reviewStatus}.`)
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <Routes>
+      <Route
+        path="/"
+        element={<DashboardPage tasks={tasks} progress={progress} loading={loading} error={error} onCreateTask={() => navigate('/tasks/new')} onViewTasks={() => navigate('/tasks')} />}
+      />
+      <Route
+        path="/tasks"
+        element={<TaskListPage tasks={tasks} loading={loading} error={error} onBack={() => navigate('/')} onCreateTask={() => navigate('/tasks/new')} onSelectTask={(taskId) => navigate(`/tasks/${taskId}`)} />}
+      />
+      <Route
+        path="/tasks/new"
+        element={<CreateTaskPage taskForm={taskForm} saving={saving} error={error} onBack={() => navigate('/')} onTaskFormChange={setTaskForm} onCreateTask={handleCreateTask} />}
+      />
+      <Route
+        path="/tasks/:taskId"
+        element={<TaskDetailRoute task={selectedTask} loading={loading} error={error} saving={saving} notice={notice} onBack={() => navigate('/tasks')} onCreateEvidence={handleCreateEvidence} onSaveEvidence={handleSaveEvidence} onGenerateEvidence={handleGenerateEvidence} onReviewSuggestion={handleReviewSuggestion} />}
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
 
