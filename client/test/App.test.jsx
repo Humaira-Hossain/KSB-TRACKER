@@ -4,11 +4,13 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../src/App'
 import { getCatalogue } from '../src/services/catalogue'
+import { getAcceptanceCriteriaWithReferences } from '../src/services/acceptanceCriteria'
 import { getProgress } from '../src/services/progress'
 import { getKsbsWithReferences } from '../src/services/ksbs'
 import { getTask, getTasks } from '../src/services/tasks'
 
 vi.mock('../src/services/catalogue', () => ({ getCatalogue: vi.fn() }))
+vi.mock('../src/services/acceptanceCriteria', () => ({ getAcceptanceCriteriaWithReferences: vi.fn() }))
 vi.mock('../src/services/progress', () => ({ getProgress: vi.fn() }))
 vi.mock('../src/services/ksbs', () => ({ getKsbsWithReferences: vi.fn() }))
 vi.mock('../src/services/tasks', () => ({
@@ -27,6 +29,7 @@ vi.mock('../src/services/evidence', () => ({
 beforeEach(() => {
   getTasks.mockResolvedValue([])
   getCatalogue.mockResolvedValue({ ksbs: [], acceptanceCriteria: [] })
+  getAcceptanceCriteriaWithReferences.mockResolvedValue([])
   getProgress.mockResolvedValue({
     ksbs: { percentage: 0, evidenced: 0, total: 0 },
     acceptance_criteria: { percentage: 0, complete: 0, total: 0 },
@@ -68,5 +71,15 @@ describe('App routes', () => {
     await user.click(screen.getByRole('button', { name: 'View KSBs' }))
 
     expect(await screen.findByRole('heading', { name: 'KSBs and references' })).toBeInTheDocument()
+  })
+
+  it('navigates from the dashboard to the acceptance criteria page', async () => {
+    const user = userEvent.setup()
+    render(<MemoryRouter initialEntries={['/']}><App /></MemoryRouter>)
+
+    await screen.findByRole('heading', { name: 'Overview' })
+    await user.click(screen.getByRole('button', { name: 'View acceptance criteria' }))
+
+    expect(await screen.findByRole('heading', { name: 'Acceptance criteria and references' })).toBeInTheDocument()
   })
 })

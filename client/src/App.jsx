@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import CreateTaskPage from './pages/CreateTaskPage'
 import DashboardPage from './pages/DashboardPage'
+import AcceptanceCriteriaPage from './pages/AcceptanceCriteriaPage'
 import KsbDetailPage from './pages/KsbDetailPage'
 import TaskDetailPage from './pages/TaskDetailPage'
 import TaskListPage from './pages/TaskListPage'
@@ -14,6 +15,7 @@ import {
   updateEvidence,
 } from './services/evidence'
 import { getProgress } from './services/progress'
+import { getAcceptanceCriteriaWithReferences } from './services/acceptanceCriteria'
 import { getKsbsWithReferences } from './services/ksbs'
 import { createTask, getTask, getTasks } from './services/tasks'
 import './App.css'
@@ -59,9 +61,11 @@ function App() {
   const [catalogue, setCatalogue] = useState({ ksbs: [], acceptanceCriteria: [] })
   const [progress, setProgress] = useState(null)
   const [ksbs, setKsbs] = useState([])
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState([])
   const [taskForm, setTaskForm] = useState(blankTask)
   const [loading, setLoading] = useState(true)
   const [ksbLoading, setKsbLoading] = useState(false)
+  const [acceptanceCriteriaLoading, setAcceptanceCriteriaLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -118,6 +122,19 @@ function App() {
     }
   }, [])
 
+  const loadAcceptanceCriteria = useCallback(async () => {
+    setAcceptanceCriteriaLoading(true)
+    setError('')
+
+    try {
+      setAcceptanceCriteria(await getAcceptanceCriteriaWithReferences())
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setAcceptanceCriteriaLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     void Promise.resolve().then(loadInitialData)
   }, [])
@@ -133,7 +150,10 @@ function App() {
     if (location.pathname === '/ksbs') {
       void Promise.resolve().then(loadKsbs)
     }
-  }, [location.pathname, loadKsbs])
+    if (location.pathname === '/acceptance-criteria') {
+      void Promise.resolve().then(loadAcceptanceCriteria)
+    }
+  }, [location.pathname, loadAcceptanceCriteria, loadKsbs])
 
   async function handleCreateTask(event) {
     event.preventDefault()
@@ -282,9 +302,10 @@ function App() {
     <Routes>
       <Route
         path="/"
-        element={<DashboardPage tasks={tasks} progress={progress} loading={loading} error={error} onCreateTask={() => navigate('/tasks/new')} onViewTasks={() => navigate('/tasks')} onViewKsbs={() => navigate('/ksbs')} />}
+        element={<DashboardPage tasks={tasks} progress={progress} loading={loading} error={error} onCreateTask={() => navigate('/tasks/new')} onViewTasks={() => navigate('/tasks')} onViewKsbs={() => navigate('/ksbs')} onViewAcceptanceCriteria={() => navigate('/acceptance-criteria')} />}
       />
       <Route path="/ksbs" element={<KsbDetailPage ksbs={ksbs} loading={ksbLoading} error={error} />} />
+      <Route path="/acceptance-criteria" element={<AcceptanceCriteriaPage criteria={acceptanceCriteria} loading={acceptanceCriteriaLoading} error={error} />} />
       <Route
         path="/tasks"
         element={<TaskListPage tasks={tasks} loading={loading} error={error} onBack={() => navigate('/')} onCreateTask={() => navigate('/tasks/new')} onSelectTask={(taskId) => navigate(`/tasks/${taskId}`)} />}

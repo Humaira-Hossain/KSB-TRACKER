@@ -156,6 +156,48 @@ select:focus {
   margin-bottom: 28px;
 }
 
+.overall-progress {
+  margin-bottom: 28px;
+}
+
+.overall-progress-heading {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.overall-progress-heading h2,
+.overall-progress-heading p {
+  margin: 0;
+}
+
+.overall-progress-heading p {
+  margin-top: 5px;
+}
+
+.overall-progress-heading strong {
+  color: var(--text-h);
+  font-size: 1.1rem;
+  white-space: nowrap;
+}
+
+.progress-bar {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  height: 42px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  background: var(--accent);
+  display: block;
+  height: 100%;
+  transition: width 180ms ease;
+}
+
 .metric-card {
   background: var(--social-bg);
   border: 1px solid var(--border);
@@ -190,6 +232,10 @@ select:focus {
   margin-bottom: 22px;
 }
 
+.ac-filter-bar {
+  grid-template-columns: minmax(220px, 2fr) repeat(2, minmax(180px, 1fr));
+}
+
 .filter-bar label {
   margin-top: 0;
 }
@@ -217,19 +263,23 @@ select:focus {
   color: var(--text-h);
 }
 
-.ksb-table th:nth-child(1) {
+.ksb-table th:nth-child(1),
+.ksb-table td:nth-child(1) {
   width: 10%;
 }
 
-.ksb-table th:nth-child(2) {
+.ksb-table th:nth-child(2),
+.ksb-table td:nth-child(2) {
   width: 56%;
 }
 
-.ksb-table th:nth-child(3) {
+.ksb-table th:nth-child(3),
+.ksb-table td:nth-child(3) {
   width: 14%;
 }
 
-.ksb-table th:nth-child(4) {
+.ksb-table th:nth-child(4),
+.ksb-table td:nth-child(4) {
   width: 20%;
 }
 
@@ -248,6 +298,65 @@ select:focus {
 
 .task-links a {
   color: var(--accent);
+}
+
+.ac-table {
+  border-collapse: collapse;
+  min-width: 1100px;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.ac-table th,
+.ac-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ac-table th {
+  color: var(--text-h);
+}
+
+.ac-table th:nth-child(1),
+.ac-table td:nth-child(1) {
+  width: 10%;
+}
+
+.ac-table th:nth-child(2),
+.ac-table td:nth-child(2) {
+  width: 60%;
+}
+
+.ac-table th:nth-child(3),
+.ac-table td:nth-child(3) {
+  width: 5%;
+}
+
+.ac-table th:nth-child(4),
+.ac-table td:nth-child(4) {
+  width: 15%;
+}
+
+.ac-table th:nth-child(5),
+.ac-table td:nth-child(5) {
+  width: 15%;
+}
+
+.ac-table th:nth-child(6),
+.ac-table td:nth-child(6) {
+  width: 15%;
+}
+
+.ac-table th:first-child,
+.ac-table td:first-child {
+  padding-left: 0;
+}
+
+.ac-table th:last-child,
+.ac-table td:last-child {
+  padding-right: 0;
 }
 
 .task-card {
@@ -404,6 +513,11 @@ select:focus {
 
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  .overall-progress-heading {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .dashboard-next-step {

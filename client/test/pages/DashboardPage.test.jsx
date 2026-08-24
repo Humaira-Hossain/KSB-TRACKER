@@ -12,6 +12,8 @@ describe('DashboardPage', () => {
 
     expect(screen.getByText('50%')).toBeInTheDocument()
     expect(screen.getByText('1 of 4 complete')).toBeInTheDocument()
+    expect(screen.getByRole('progressbar', { name: 'Overall progress' })).toHaveAttribute('aria-valuenow', '38')
+    expect(screen.getByText('38% complete')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Create task' }))
 
     expect(onCreateTask).toHaveBeenCalledOnce()
