@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import CreateTaskPage from './pages/CreateTaskPage'
 import DashboardPage from './pages/DashboardPage'
+import KsbDetailPage from './pages/KsbDetailPage'
 import TaskDetailPage from './pages/TaskDetailPage'
 import TaskListPage from './pages/TaskListPage'
 import { getCatalogue } from './services/catalogue'
@@ -13,6 +14,7 @@ import {
   updateEvidence,
 } from './services/evidence'
 import { getProgress } from './services/progress'
+import { getKsbsWithReferences } from './services/ksbs'
 import { createTask, getTask, getTasks } from './services/tasks'
 import './App.css'
 
@@ -56,8 +58,10 @@ function App() {
   const [selectedTask, setSelectedTask] = useState(null)
   const [catalogue, setCatalogue] = useState({ ksbs: [], acceptanceCriteria: [] })
   const [progress, setProgress] = useState(null)
+  const [ksbs, setKsbs] = useState([])
   const [taskForm, setTaskForm] = useState(blankTask)
   const [loading, setLoading] = useState(true)
+  const [ksbLoading, setKsbLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -101,6 +105,19 @@ function App() {
     setTasks(await getTasks())
   }
 
+  const loadKsbs = useCallback(async () => {
+    setKsbLoading(true)
+    setError('')
+
+    try {
+      setKsbs(await getKsbsWithReferences())
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setKsbLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     void Promise.resolve().then(loadInitialData)
   }, [])
@@ -111,6 +128,12 @@ function App() {
       void Promise.resolve().then(() => loadTask(taskPath[1]))
     }
   }, [location.pathname, loadTask, selectedTask?.id])
+
+  useEffect(() => {
+    if (location.pathname === '/ksbs') {
+      void Promise.resolve().then(loadKsbs)
+    }
+  }, [location.pathname, loadKsbs])
 
   async function handleCreateTask(event) {
     event.preventDefault()
@@ -259,8 +282,9 @@ function App() {
     <Routes>
       <Route
         path="/"
-        element={<DashboardPage tasks={tasks} progress={progress} loading={loading} error={error} onCreateTask={() => navigate('/tasks/new')} onViewTasks={() => navigate('/tasks')} />}
+        element={<DashboardPage tasks={tasks} progress={progress} loading={loading} error={error} onCreateTask={() => navigate('/tasks/new')} onViewTasks={() => navigate('/tasks')} onViewKsbs={() => navigate('/ksbs')} />}
       />
+      <Route path="/ksbs" element={<KsbDetailPage ksbs={ksbs} loading={ksbLoading} error={error} />} />
       <Route
         path="/tasks"
         element={<TaskListPage tasks={tasks} loading={loading} error={error} onBack={() => navigate('/')} onCreateTask={() => navigate('/tasks/new')} onSelectTask={(taskId) => navigate(`/tasks/${taskId}`)} />}

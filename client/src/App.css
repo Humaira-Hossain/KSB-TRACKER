@@ -116,7 +116,8 @@ label {
 }
 
 input,
-textarea {
+textarea,
+select {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -130,7 +131,8 @@ textarea {
 }
 
 input:focus,
-textarea:focus {
+textarea:focus,
+select:focus {
   border-color: var(--accent);
   outline: 2px solid var(--accent-border);
 }
@@ -178,6 +180,74 @@ textarea:focus {
   align-items: center;
   display: flex;
   justify-content: space-between;
+}
+
+/* KSB catalogue */
+.filter-bar {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(220px, 2fr) minmax(180px, 1fr);
+  margin-bottom: 22px;
+}
+
+.filter-bar label {
+  margin-top: 0;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.ksb-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  min-width: 760px;
+  width: 100%;
+}
+
+.ksb-table th,
+.ksb-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 14px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ksb-table th {
+  color: var(--text-h);
+}
+
+.ksb-table th:nth-child(1) {
+  width: 10%;
+}
+
+.ksb-table th:nth-child(2) {
+  width: 56%;
+}
+
+.ksb-table th:nth-child(3) {
+  width: 14%;
+}
+
+.ksb-table th:nth-child(4) {
+  width: 20%;
+}
+
+.ksb-table th:first-child {
+  padding-left: 0;
+}
+
+.ksb-table th:last-child {
+  padding-right: 0;
+}
+
+.task-links {
+  display: grid;
+  gap: 6px;
+}
+
+.task-links a {
+  color: var(--accent);
 }
 
 .task-card {
@@ -340,5 +410,9 @@ textarea:focus {
     align-items: stretch;
     flex-direction: column;
     gap: 18px;
+  }
+
+  .filter-bar {
+    grid-template-columns: 1fr;
   }
 }

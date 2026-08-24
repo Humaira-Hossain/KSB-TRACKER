@@ -8,7 +8,7 @@ function Metric({ label, value, detail }) {
   )
 }
 
-function DashboardPage({ tasks, progress, loading, error, onCreateTask, onViewTasks }) {
+function DashboardPage({ tasks, progress, loading, error, onCreateTask, onViewTasks, onViewKsbs }) {
   const completedTasks = tasks.filter((task) => task.status === 'completed').length
 
   return (
@@ -46,6 +46,14 @@ function DashboardPage({ tasks, progress, loading, error, onCreateTask, onViewTa
               <p>Open an existing task or create a new one to start the evidence workflow.</p>
             </div>
             <button className="secondary" type="button" onClick={onViewTasks}>View tasks</button>
+          </section>
+
+          <section className="panel dashboard-next-step" aria-label="KSB references">
+            <div>
+              <h2>See your KSBs</h2>
+              <p>Browse every KSB and see the tasks whose evidence references it.</p>
+            </div>
+            <button className="secondary" type="button" onClick={onViewKsbs}>View KSBs</button>
           </section>
         </>
       )}

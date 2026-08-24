@@ -2,6 +2,8 @@ import EvidenceEditor from '../components/EvidenceEditor'
 import StatusBadge from '../components/StatusBadge'
 
 function TaskDetailPage({ task, saving, error, notice, onBack, onCreateEvidence, onSaveEvidence, onGenerateEvidence, onReviewSuggestion }) {
+  const generationLocked = task.evidence.some((evidence) => evidence.ai_generated)
+
   return (
     <main className="app-shell">
       <button className="text-button" onClick={onBack} type="button">← All tasks</button>
@@ -40,6 +42,7 @@ function TaskDetailPage({ task, saving, error, notice, onBack, onCreateEvidence,
             key={`${evidence.id}-${evidence.updated_at}-${evidence.status}`}
             evidence={evidence}
             saving={saving}
+            generationLocked={generationLocked}
             onSave={onSaveEvidence}
             onGenerate={onGenerateEvidence}
             onReview={onReviewSuggestion}

@@ -4,7 +4,7 @@ import SuggestionGroup from './SuggestionGroup'
 
 const starFields = ['situation', 'task', 'action', 'result']
 
-function EvidenceEditor({ evidence, saving, onSave, onGenerate, onReview }) {
+function EvidenceEditor({ evidence, saving, generationLocked, onSave, onGenerate, onReview }) {
   const [draft, setDraft] = useState(evidence)
 
   function updateField(field, value) {
@@ -37,12 +37,13 @@ function EvidenceEditor({ evidence, saving, onSave, onGenerate, onReview }) {
 
       <div className="form-actions">
         <button type="button" onClick={() => onSave(draft)} disabled={saving}>Save evidence</button>
-        <button className="secondary" type="button" onClick={() => onGenerate(draft)} disabled={saving || !draft.rawNotes}>
+        <button className="secondary" type="button" onClick={() => onGenerate(draft)} disabled={saving || !draft.rawNotes || generationLocked}>
           {saving ? 'Working…' : 'Generate STAR'}
         </button>
       </div>
 
       {!draft.rawNotes && <p className="field-hint">This evidence needs rough notes before STAR can be generated.</p>}
+      {generationLocked && <p className="field-hint">STAR has already been generated for this task. You can still edit and save the existing evidence.</p>}
 
       {(draft.ksbs.length > 0 || draft.acceptanceCriteria.length > 0) && (
         <section className="suggestions">
