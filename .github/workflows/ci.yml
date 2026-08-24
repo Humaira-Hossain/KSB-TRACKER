@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Install server dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Lint client
+        working-directory: client
+        run: npm run lint
+
+      - name: Check client formatting
+        working-directory: client
+        run: npm run format:check
+
+      - name: Lint server
+        working-directory: server
+        run: npm run lint
+
+      - name: Check server formatting
+        working-directory: server
+        run: npm run format:check
+
+      - name: Run client tests
+        working-directory: client
+        run: npm test
+
+      - name: Run server tests
+        working-directory: server
+        run: npm test
+
+      - name: Build client
+        working-directory: client
+        run: npm run build
