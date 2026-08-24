@@ -52,7 +52,12 @@ export async function generateEvidence(request, response, next) {
     const evidenceId = idFrom(request);
     const evidenceResult = await evidence.getEvidenceForGeneration(evidenceId);
     if (!evidenceResult.rowCount) throw httpError(404, "Evidence not found.");
-    const rawNotes = evidenceResult.rows[0].raw_notes?.trim();
+    const sourceEvidence = evidenceResult.rows[0];
+    if (sourceEvidence.ai_generated) throw httpError(409, "STAR has already been generated for this evidence.");
+    if (sourceEvidence.task_id && (await evidence.getGeneratedEvidenceForTask(sourceEvidence.task_id)).rowCount) {
+      throw httpError(409, "STAR has already been generated for this task. Edit the existing STAR evidence instead.");
+    }
+    const rawNotes = sourceEvidence.raw_notes?.trim();
     if (!rawNotes) throw httpError(400, "Evidence must contain raw_notes before it can be generated.");
 
     const [ksbs, acceptanceCriteria] = await catalog.getGenerationCatalogue();

@@ -9,7 +9,11 @@ export function getEvidence(id) {
 }
 
 export function getEvidenceForGeneration(id) {
-  return pool.query("SELECT id, title, raw_notes FROM evidence WHERE id = $1", [id]);
+  return pool.query("SELECT id, task_id, title, raw_notes, ai_generated FROM evidence WHERE id = $1", [id]);
+}
+
+export function getGeneratedEvidenceForTask(taskId) {
+  return pool.query("SELECT id FROM evidence WHERE task_id = $1 AND ai_generated = TRUE LIMIT 1", [taskId]);
 }
 
 export function createEvidence(taskId, evidence) {
@@ -48,6 +52,23 @@ export async function saveGeneratedEvidence(evidenceId, generated, suggestions) 
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    const sourceEvidence = await client.query("SELECT task_id, ai_generated FROM evidence WHERE id = $1 FOR UPDATE", [evidenceId]);
+
+    if (sourceEvidence.rows[0].ai_generated) {
+      throw Object.assign(new Error("STAR has already been generated for this evidence."), { status: 409 });
+    }
+
+    const taskId = sourceEvidence.rows[0].task_id;
+    if (taskId) {
+      // Serialise generation attempts for one task so two evidence items cannot
+      // both generate STAR at the same time.
+      await client.query("SELECT id FROM tasks WHERE id = $1 FOR UPDATE", [taskId]);
+      const generatedForTask = await client.query("SELECT id FROM evidence WHERE task_id = $1 AND ai_generated = TRUE LIMIT 1", [taskId]);
+      if (generatedForTask.rowCount) {
+        throw Object.assign(new Error("STAR has already been generated for this task. Edit the existing STAR evidence instead."), { status: 409 });
+      }
+    }
+
     const evidenceResult = await client.query("UPDATE evidence SET title = $1, situation = $2, task = $3, action = $4, result = $5, ai_generated = TRUE, user_reviewed = FALSE, status = 'awaiting_review', reviewed_at = NULL WHERE id = $6 RETURNING *", [generated.title, generated.situation, generated.task, generated.action, generated.result, evidenceId]);
 
     for (const suggestion of suggestions.ksbs) {
