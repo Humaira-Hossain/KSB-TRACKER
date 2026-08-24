@@ -85,7 +85,8 @@ export async function generateEvidenceFromNotes({ rawNotes, ksbs, acceptanceCrit
       }),
       signal: AbortSignal.timeout(60000),
     });
-  } catch {
+  } catch (error) {
+    console.error("NVIDIA fetch failed:", error);
     throw httpError(502, "AI service could not be reached.");
   }
 
@@ -94,6 +95,7 @@ export async function generateEvidenceFromNotes({ rawNotes, ksbs, acceptanceCrit
   let payload;
   try { payload = await response.json(); } catch { throw aiResponseError("AI service did not return JSON."); }
   const content = payload?.choices?.[0]?.message?.content;
+  console.log("NVIDIA AI response content:", content);
   if (typeof content !== "string") throw aiResponseError("AI service response did not contain message content.");
   return validateGeneration(content, ksbs, acceptanceCriteria);
 }

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node --use-system-ca src/server.js",
     "dev": "nodemon --exec \"node --use-system-ca\" src/server.js",
-    "test:api": "node --use-system-ca src/test-api.js"
+    "test:api": "node --use-system-ca src/test-api.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js"
   },
   "keywords": [],
   "author": "",
