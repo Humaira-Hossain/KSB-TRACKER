@@ -3,7 +3,9 @@ import TaskForm from '../components/TaskForm'
 function CreateTaskPage({ taskForm, saving, error, onBack, onTaskFormChange, onCreateTask }) {
   return (
     <main className="app-shell">
-      <button className="text-button" type="button" onClick={onBack}>← Dashboard</button>
+      <button className="text-button" type="button" onClick={onBack}>
+        ← Dashboard
+      </button>
 
       <section className="page-heading">
         <div>
@@ -13,7 +15,11 @@ function CreateTaskPage({ taskForm, saving, error, onBack, onTaskFormChange, onC
         </div>
       </section>
 
-      {error && <p className="message error" role="alert">{error}</p>}
+      {error && (
+        <p className="message error" role="alert">
+          {error}
+        </p>
+      )}
 
       <TaskForm
         task={taskForm}

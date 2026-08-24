@@ -10,16 +10,26 @@ function Metric({ label, value, detail }) {
   )
 }
 
-function DashboardPage({ tasks, progress, loading, error, onCreateTask, onViewTasks, onViewKsbs, onViewAcceptanceCriteria }) {
+function DashboardPage({
+  tasks,
+  progress,
+  loading,
+  error,
+  onCreateTask,
+  onViewTasks,
+  onViewKsbs,
+  onViewAcceptanceCriteria,
+}) {
   const completedTasks = tasks.filter((task) => task.status === 'completed').length
   const ksbEvidenced = progress?.ksbs?.evidenced ?? 0
   const ksbTotal = progress?.ksbs?.total ?? 0
   const acceptanceCriteriaComplete = progress?.acceptance_criteria?.complete ?? 0
   const acceptanceCriteriaTotal = progress?.acceptance_criteria?.total ?? 0
   const overallTotal = ksbTotal + acceptanceCriteriaTotal
-  const overallProgress = overallTotal === 0
-    ? 0
-    : Math.round(((ksbEvidenced + acceptanceCriteriaComplete) / overallTotal) * 100)
+  const overallProgress =
+    overallTotal === 0
+      ? 0
+      : Math.round(((ksbEvidenced + acceptanceCriteriaComplete) / overallTotal) * 100)
 
   return (
     <main className="app-shell">
@@ -29,12 +39,20 @@ function DashboardPage({ tasks, progress, loading, error, onCreateTask, onViewTa
           <h1>Overview</h1>
           <p>Track your evidence, KSB coverage, and acceptance criteria progress.</p>
         </div>
-        <button type="button" onClick={onCreateTask}>Create task</button>
+        <button type="button" onClick={onCreateTask}>
+          Create task
+        </button>
       </section>
 
-      {error && <p className="message error" role="alert">{error}</p>}
+      {error && (
+        <p className="message error" role="alert">
+          {error}
+        </p>
+      )}
 
-      {loading ? <p className="loading">Loading overview…</p> : (
+      {loading ? (
+        <p className="loading">Loading overview…</p>
+      ) : (
         <>
           <section className="panel overall-progress" aria-label="Overall progress summary">
             <div className="overall-progress-heading">
@@ -66,7 +84,9 @@ function DashboardPage({ tasks, progress, loading, error, onCreateTask, onViewTa
               <h2>Continue building evidence</h2>
               <p>Open an existing task or create a new one to start the evidence workflow.</p>
             </div>
-            <button className="secondary" type="button" onClick={onViewTasks}>View tasks</button>
+            <button className="secondary" type="button" onClick={onViewTasks}>
+              View tasks
+            </button>
           </section>
 
           <section className="panel dashboard-next-step" aria-label="KSB references">
@@ -74,15 +94,22 @@ function DashboardPage({ tasks, progress, loading, error, onCreateTask, onViewTa
               <h2>See your KSBs</h2>
               <p>Browse every KSB and see the tasks whose evidence references it.</p>
             </div>
-            <button className="secondary" type="button" onClick={onViewKsbs}>View KSBs</button>
+            <button className="secondary" type="button" onClick={onViewKsbs}>
+              View KSBs
+            </button>
           </section>
 
-          <section className="panel dashboard-next-step" aria-label="Acceptance criteria references">
+          <section
+            className="panel dashboard-next-step"
+            aria-label="Acceptance criteria references"
+          >
             <div>
               <h2>See your acceptance criteria</h2>
               <p>Browse pass and distinction criteria, their required KSBs, and linked tasks.</p>
             </div>
-            <button className="secondary" type="button" onClick={onViewAcceptanceCriteria}>View acceptance criteria</button>
+            <button className="secondary" type="button" onClick={onViewAcceptanceCriteria}>
+              View acceptance criteria
+            </button>
           </section>
         </>
       )}

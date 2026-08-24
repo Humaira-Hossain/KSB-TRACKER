@@ -25,7 +25,11 @@ export function reviewKsbSuggestion(evidenceId, ksbId, reviewStatus) {
   })
 }
 
-export function reviewAcceptanceCriterionSuggestion(evidenceId, acceptanceCriterionId, reviewStatus) {
+export function reviewAcceptanceCriterionSuggestion(
+  evidenceId,
+  acceptanceCriterionId,
+  reviewStatus,
+) {
   return api(`/evidence/${evidenceId}/acceptance-criteria/${acceptanceCriterionId}/review`, {
     method: 'PUT',
     body: JSON.stringify({ reviewStatus }),

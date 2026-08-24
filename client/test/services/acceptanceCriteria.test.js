@@ -13,10 +13,19 @@ describe('getAcceptanceCriteriaWithReferences', () => {
     api
       .mockResolvedValueOnce([
         { code: 'AC03', level: 'Pass', description: 'Plan delivery.', ksb_codes: ['K1'] },
-        { code: 'DC01', level: 'Distinction', description: 'Evaluate delivery.', ksb_codes: ['K1', 'S2'] },
+        {
+          code: 'DC01',
+          level: 'Distinction',
+          description: 'Evaluate delivery.',
+          ksb_codes: ['K1', 'S2'],
+        },
       ])
-      .mockResolvedValueOnce({ evidence: [{ review_status: 'accepted', task: { id: '3', title: 'Planning' } }] })
-      .mockResolvedValueOnce({ evidence: [{ review_status: 'suggested', task: { id: '4', title: 'Retrospective' } }] })
+      .mockResolvedValueOnce({
+        evidence: [{ review_status: 'accepted', task: { id: '3', title: 'Planning' } }],
+      })
+      .mockResolvedValueOnce({
+        evidence: [{ review_status: 'suggested', task: { id: '4', title: 'Retrospective' } }],
+      })
 
     await expect(getAcceptanceCriteriaWithReferences()).resolves.toEqual([
       {

@@ -29,7 +29,9 @@ function getEvidenceStatus(evidence) {
 export async function getAcceptanceCriteriaWithReferences() {
   const criteria = await api('/acceptance-criteria')
   const evidenceResults = await Promise.all(
-    criteria.map((criterion) => api(`/acceptance-criteria/${encodeURIComponent(criterion.code)}/evidence`)),
+    criteria.map((criterion) =>
+      api(`/acceptance-criteria/${encodeURIComponent(criterion.code)}/evidence`),
+    ),
   )
 
   return criteria.map((criterion, index) => {

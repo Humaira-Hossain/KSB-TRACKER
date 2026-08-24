@@ -25,24 +25,38 @@ const criteria = [
 
 describe('AcceptanceCriteriaPage', () => {
   it('shows distinction criteria, required KSBs, and task links', () => {
-    render(<MemoryRouter><AcceptanceCriteriaPage criteria={criteria} loading={false} error="" /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <AcceptanceCriteriaPage criteria={criteria} loading={false} error="" />
+      </MemoryRouter>,
+    )
 
     expect(screen.getByRole('columnheader', { name: 'Criterion' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'Distinction' })).toBeInTheDocument()
     expect(screen.getByText('K1, S2')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Release planning' })).toHaveAttribute('href', '/tasks/7')
+    expect(screen.getByRole('link', { name: 'Release planning' })).toHaveAttribute(
+      'href',
+      '/tasks/7',
+    )
   })
 
   it('filters by criterion level, evidence status, and code', async () => {
     const user = userEvent.setup()
-    render(<MemoryRouter><AcceptanceCriteriaPage criteria={criteria} loading={false} error="" /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <AcceptanceCriteriaPage criteria={criteria} loading={false} error="" />
+      </MemoryRouter>,
+    )
 
     await user.selectOptions(screen.getByLabelText('Filter by level'), 'Distinction')
     expect(screen.getByText('DC01')).toBeInTheDocument()
     expect(screen.queryByText('AC03')).not.toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('Filter by level'), 'All levels')
-    await user.selectOptions(screen.getByLabelText('Filter by evidence status'), 'Accepted evidence')
+    await user.selectOptions(
+      screen.getByLabelText('Filter by evidence status'),
+      'Accepted evidence',
+    )
     expect(screen.getByText('AC03')).toBeInTheDocument()
     expect(screen.queryByText('DC01')).not.toBeInTheDocument()
 

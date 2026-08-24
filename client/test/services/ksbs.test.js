@@ -29,7 +29,10 @@ describe('getKsbsWithReferences', () => {
         code: 'K1',
         description: 'Lifecycle',
         status: 'Referenced',
-        referencedIn: [{ id: '3', title: 'Planning' }, { id: '4', title: 'Testing' }],
+        referencedIn: [
+          { id: '3', title: 'Planning' },
+          { id: '4', title: 'Testing' },
+        ],
       },
       {
         code: 'S2',

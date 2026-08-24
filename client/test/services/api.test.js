@@ -14,8 +14,9 @@ describe('api', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(api('/tasks', { method: 'POST', body: JSON.stringify({ title: 'Task' }) }))
-      .resolves.toEqual({ id: '1', title: 'Task' })
+    await expect(
+      api('/tasks', { method: 'POST', body: JSON.stringify({ title: 'Task' }) }),
+    ).resolves.toEqual({ id: '1', title: 'Task' })
 
     expect(fetchMock).toHaveBeenCalledWith(
       'http://localhost:5000/api/tasks',
@@ -27,13 +28,17 @@ describe('api', () => {
   })
 
   it('surfaces an API error message to the UI', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: false,
-      status: 409,
-      json: async () => ({ error: 'STAR has already been generated for this task.' }),
-    }))
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => ({ error: 'STAR has already been generated for this task.' }),
+      }),
+    )
 
-    await expect(api('/evidence/1/generate', { method: 'POST' }))
-      .rejects.toThrow('STAR has already been generated for this task.')
+    await expect(api('/evidence/1/generate', { method: 'POST' })).rejects.toThrow(
+      'STAR has already been generated for this task.',
+    )
   })
 })

@@ -10,7 +10,9 @@ import { getKsbsWithReferences } from '../src/services/ksbs'
 import { getTask, getTasks } from '../src/services/tasks'
 
 vi.mock('../src/services/catalogue', () => ({ getCatalogue: vi.fn() }))
-vi.mock('../src/services/acceptanceCriteria', () => ({ getAcceptanceCriteriaWithReferences: vi.fn() }))
+vi.mock('../src/services/acceptanceCriteria', () => ({
+  getAcceptanceCriteriaWithReferences: vi.fn(),
+}))
 vi.mock('../src/services/progress', () => ({ getProgress: vi.fn() }))
 vi.mock('../src/services/ksbs', () => ({ getKsbsWithReferences: vi.fn() }))
 vi.mock('../src/services/tasks', () => ({
@@ -47,7 +49,11 @@ beforeEach(() => {
 describe('App routes', () => {
   it('navigates from the dashboard to the dedicated create-task page', async () => {
     const user = userEvent.setup()
-    render(<MemoryRouter initialEntries={['/']}><App /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>,
+    )
 
     expect(await screen.findByRole('heading', { name: 'Overview' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Create task' }))
@@ -57,7 +63,11 @@ describe('App routes', () => {
   })
 
   it('loads a task when opening a task URL directly', async () => {
-    render(<MemoryRouter initialEntries={['/tasks/7']}><App /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/tasks/7']}>
+        <App />
+      </MemoryRouter>,
+    )
 
     expect(await screen.findByRole('heading', { name: 'Direct URL task' })).toBeInTheDocument()
     expect(getTask).toHaveBeenCalledWith('7')
@@ -65,7 +75,11 @@ describe('App routes', () => {
 
   it('navigates from the dashboard to the KSB detail page', async () => {
     const user = userEvent.setup()
-    render(<MemoryRouter initialEntries={['/']}><App /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>,
+    )
 
     await screen.findByRole('heading', { name: 'Overview' })
     await user.click(screen.getByRole('button', { name: 'View KSBs' }))
@@ -75,11 +89,17 @@ describe('App routes', () => {
 
   it('navigates from the dashboard to the acceptance criteria page', async () => {
     const user = userEvent.setup()
-    render(<MemoryRouter initialEntries={['/']}><App /></MemoryRouter>)
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <App />
+      </MemoryRouter>,
+    )
 
     await screen.findByRole('heading', { name: 'Overview' })
     await user.click(screen.getByRole('button', { name: 'View acceptance criteria' }))
 
-    expect(await screen.findByRole('heading', { name: 'Acceptance criteria and references' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Acceptance criteria and references' }),
+    ).toBeInTheDocument()
   })
 })

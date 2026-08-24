@@ -45,7 +45,13 @@ function TaskDetailRoute({ task, loading, error, ...pageProps }) {
   if (!task || String(task.id) !== taskId) {
     return (
       <main className="app-shell">
-        {error ? <p className="message error" role="alert">{error}</p> : <p className="loading">{loading ? 'Loading task…' : 'Task not found.'}</p>}
+        {error ? (
+          <p className="message error" role="alert">
+            {error}
+          </p>
+        ) : (
+          <p className="loading">{loading ? 'Loading task…' : 'Task not found.'}</p>
+        )}
       </main>
     )
   }
@@ -179,16 +185,18 @@ function App() {
 
     setSelectedTask((task) => ({
       ...task,
-      evidence: task.evidence.map((item) => (
+      evidence: task.evidence.map((item) =>
         String(item.id) === String(nextEvidence.id)
           ? {
               ...item,
               ...nextEvidence,
               ksbs: includesKsbs ? nextEvidence.ksbs : item.ksbs,
-              acceptanceCriteria: includesAcceptanceCriteria ? nextEvidence.acceptanceCriteria : item.acceptanceCriteria,
+              acceptanceCriteria: includesAcceptanceCriteria
+                ? nextEvidence.acceptanceCriteria
+                : item.acceptanceCriteria,
             }
-          : item
-      )),
+          : item,
+      ),
     }))
   }
 
@@ -201,12 +209,17 @@ function App() {
         title: `Evidence: ${selectedTask.title}`,
         rawNotes: selectedTask.rawNotes,
       })
-      setSelectedTask((task) => ({ ...task, evidence: [normaliseEvidence(evidence), ...task.evidence] }))
-      setTasks((items) => items.map((item) => (
-        String(item.id) === String(selectedTask.id)
-          ? { ...item, evidence_count: Number(item.evidence_count) + 1 }
-          : item
-      )))
+      setSelectedTask((task) => ({
+        ...task,
+        evidence: [normaliseEvidence(evidence), ...task.evidence],
+      }))
+      setTasks((items) =>
+        items.map((item) =>
+          String(item.id) === String(selectedTask.id)
+            ? { ...item, evidence_count: Number(item.evidence_count) + 1 }
+            : item,
+        ),
+      )
       setNotice('Evidence created. Review its title, then generate STAR when ready.')
     } catch (requestError) {
       setError(requestError.message)
@@ -255,8 +268,12 @@ function App() {
     try {
       const generated = await generateEvidence(evidence.id)
       const nextEvidence = normaliseEvidence(generated.evidence)
-      nextEvidence.ksbs = generated.suggestions.ksbs.map((suggestion) => attachCatalogueDescription(suggestion, 'ksb'))
-      nextEvidence.acceptanceCriteria = generated.suggestions.acceptanceCriteria.map((suggestion) => attachCatalogueDescription(suggestion, 'ac'))
+      nextEvidence.ksbs = generated.suggestions.ksbs.map((suggestion) =>
+        attachCatalogueDescription(suggestion, 'ksb'),
+      )
+      nextEvidence.acceptanceCriteria = generated.suggestions.acceptanceCriteria.map((suggestion) =>
+        attachCatalogueDescription(suggestion, 'ac'),
+      )
       replaceEvidence(nextEvidence)
       setNotice('STAR evidence and AI suggestions are ready for your review.')
     } catch (requestError) {
@@ -284,9 +301,9 @@ function App() {
           const collection = type === 'ksb' ? 'ksbs' : 'acceptanceCriteria'
           return {
             ...item,
-            [collection]: item[collection].map((entry) => (
-              String(entry.id) === String(suggestion.id) ? { ...entry, reviewStatus } : entry
-            )),
+            [collection]: item[collection].map((entry) =>
+              String(entry.id) === String(suggestion.id) ? { ...entry, reviewStatus } : entry,
+            ),
           }
         }),
       }))
@@ -302,21 +319,75 @@ function App() {
     <Routes>
       <Route
         path="/"
-        element={<DashboardPage tasks={tasks} progress={progress} loading={loading} error={error} onCreateTask={() => navigate('/tasks/new')} onViewTasks={() => navigate('/tasks')} onViewKsbs={() => navigate('/ksbs')} onViewAcceptanceCriteria={() => navigate('/acceptance-criteria')} />}
+        element={
+          <DashboardPage
+            tasks={tasks}
+            progress={progress}
+            loading={loading}
+            error={error}
+            onCreateTask={() => navigate('/tasks/new')}
+            onViewTasks={() => navigate('/tasks')}
+            onViewKsbs={() => navigate('/ksbs')}
+            onViewAcceptanceCriteria={() => navigate('/acceptance-criteria')}
+          />
+        }
       />
-      <Route path="/ksbs" element={<KsbDetailPage ksbs={ksbs} loading={ksbLoading} error={error} />} />
-      <Route path="/acceptance-criteria" element={<AcceptanceCriteriaPage criteria={acceptanceCriteria} loading={acceptanceCriteriaLoading} error={error} />} />
+      <Route
+        path="/ksbs"
+        element={<KsbDetailPage ksbs={ksbs} loading={ksbLoading} error={error} />}
+      />
+      <Route
+        path="/acceptance-criteria"
+        element={
+          <AcceptanceCriteriaPage
+            criteria={acceptanceCriteria}
+            loading={acceptanceCriteriaLoading}
+            error={error}
+          />
+        }
+      />
       <Route
         path="/tasks"
-        element={<TaskListPage tasks={tasks} loading={loading} error={error} onBack={() => navigate('/')} onCreateTask={() => navigate('/tasks/new')} onSelectTask={(taskId) => navigate(`/tasks/${taskId}`)} />}
+        element={
+          <TaskListPage
+            tasks={tasks}
+            loading={loading}
+            error={error}
+            onBack={() => navigate('/')}
+            onCreateTask={() => navigate('/tasks/new')}
+            onSelectTask={(taskId) => navigate(`/tasks/${taskId}`)}
+          />
+        }
       />
       <Route
         path="/tasks/new"
-        element={<CreateTaskPage taskForm={taskForm} saving={saving} error={error} onBack={() => navigate('/')} onTaskFormChange={setTaskForm} onCreateTask={handleCreateTask} />}
+        element={
+          <CreateTaskPage
+            taskForm={taskForm}
+            saving={saving}
+            error={error}
+            onBack={() => navigate('/')}
+            onTaskFormChange={setTaskForm}
+            onCreateTask={handleCreateTask}
+          />
+        }
       />
       <Route
         path="/tasks/:taskId"
-        element={<TaskDetailRoute task={selectedTask} loading={loading} error={error} saving={saving} notice={notice} onBack={() => navigate('/tasks')} onCreateEvidence={handleCreateEvidence} onSaveEvidence={handleSaveEvidence} onGenerateEvidence={handleGenerateEvidence} onReviewSuggestion={handleReviewSuggestion} />}
+        element={
+          <TaskDetailRoute
+            task={selectedTask}
+            loading={loading}
+            error={error}
+            saving={saving}
+            notice={notice}
+            onBack={() => navigate('/tasks')}
+            onCreateEvidence={handleCreateEvidence}
+            onSaveEvidence={handleSaveEvidence}
+            onGenerateEvidence={handleGenerateEvidence}
+            onReviewSuggestion={handleReviewSuggestion}
+          />
+        }
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

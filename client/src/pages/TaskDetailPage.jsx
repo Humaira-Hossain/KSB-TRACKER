@@ -1,12 +1,24 @@
 import EvidenceEditor from '../components/EvidenceEditor'
 import StatusBadge from '../components/StatusBadge'
 
-function TaskDetailPage({ task, saving, error, notice, onBack, onCreateEvidence, onSaveEvidence, onGenerateEvidence, onReviewSuggestion }) {
+function TaskDetailPage({
+  task,
+  saving,
+  error,
+  notice,
+  onBack,
+  onCreateEvidence,
+  onSaveEvidence,
+  onGenerateEvidence,
+  onReviewSuggestion,
+}) {
   const generationLocked = task.evidence.some((evidence) => evidence.ai_generated)
 
   return (
     <main className="app-shell">
-      <button className="text-button" onClick={onBack} type="button">← All tasks</button>
+      <button className="text-button" onClick={onBack} type="button">
+        ← All tasks
+      </button>
 
       <section className="page-heading">
         <div>
@@ -16,7 +28,11 @@ function TaskDetailPage({ task, saving, error, notice, onBack, onCreateEvidence,
         <StatusBadge status={task.status} />
       </section>
 
-      {error && <p className="message error" role="alert">{error}</p>}
+      {error && (
+        <p className="message error" role="alert">
+          {error}
+        </p>
+      )}
       {notice && <p className="message success">{notice}</p>}
 
       <section className="panel task-notes">
@@ -29,11 +45,15 @@ function TaskDetailPage({ task, saving, error, notice, onBack, onCreateEvidence,
           <h2>Evidence</h2>
           <p>Create evidence from your task notes, then review the STAR response.</p>
         </div>
-        <button type="button" onClick={onCreateEvidence} disabled={saving}>Create evidence</button>
+        <button type="button" onClick={onCreateEvidence} disabled={saving}>
+          Create evidence
+        </button>
       </section>
 
       {task.evidence.length === 0 && (
-        <section className="empty-state">No evidence yet. Create an evidence item to start the STAR workflow.</section>
+        <section className="empty-state">
+          No evidence yet. Create an evidence item to start the STAR workflow.
+        </section>
       )}
 
       <div className="evidence-list">

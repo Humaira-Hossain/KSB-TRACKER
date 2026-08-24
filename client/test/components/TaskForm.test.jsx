@@ -11,7 +11,15 @@ describe('TaskForm', () => {
 
     function ControlledTaskForm() {
       const [task, setTask] = useState({ title: '', rawNotes: '' })
-      return <TaskForm task={task} saving={false} onChange={setTask} onSubmit={onSubmit} onCancel={vi.fn()} />
+      return (
+        <TaskForm
+          task={task}
+          saving={false}
+          onChange={setTask}
+          onSubmit={onSubmit}
+          onCancel={vi.fn()}
+        />
+      )
     }
 
     render(<ControlledTaskForm />)
@@ -27,7 +35,15 @@ describe('TaskForm', () => {
     const user = userEvent.setup()
     const onCancel = vi.fn()
 
-    render(<TaskForm task={{ title: '', rawNotes: '' }} saving={false} onChange={vi.fn()} onSubmit={vi.fn()} onCancel={onCancel} />)
+    render(
+      <TaskForm
+        task={{ title: '', rawNotes: '' }}
+        saving={false}
+        onChange={vi.fn()}
+        onSubmit={vi.fn()}
+        onCancel={onCancel}
+      />,
+    )
 
     await user.click(screen.getByRole('button', { name: 'Cancel' }))
 

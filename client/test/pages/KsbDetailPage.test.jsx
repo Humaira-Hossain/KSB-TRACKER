@@ -21,16 +21,27 @@ const ksbs = [
 
 describe('KsbDetailPage', () => {
   it('shows KSBs with task links in the references column', () => {
-    render(<MemoryRouter><KsbDetailPage ksbs={ksbs} loading={false} error="" /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <KsbDetailPage ksbs={ksbs} loading={false} error="" />
+      </MemoryRouter>,
+    )
 
     expect(screen.getByRole('columnheader', { name: 'KSB' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Release planning' })).toHaveAttribute('href', '/tasks/7')
+    expect(screen.getByRole('link', { name: 'Release planning' })).toHaveAttribute(
+      'href',
+      '/tasks/7',
+    )
     expect(screen.getByRole('cell', { name: 'Not referenced' })).toBeInTheDocument()
   })
 
   it('filters by status and KSB code', async () => {
     const user = userEvent.setup()
-    render(<MemoryRouter><KsbDetailPage ksbs={ksbs} loading={false} error="" /></MemoryRouter>)
+    render(
+      <MemoryRouter>
+        <KsbDetailPage ksbs={ksbs} loading={false} error="" />
+      </MemoryRouter>,
+    )
 
     await user.selectOptions(screen.getByLabelText('Filter by status'), 'Referenced')
     expect(screen.getByText('K1')).toBeInTheDocument()

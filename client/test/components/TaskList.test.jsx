@@ -8,7 +8,12 @@ describe('TaskList', () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()
 
-    render(<TaskList tasks={[{ id: '4', title: 'Build API', status: 'draft', evidence_count: 1 }]} onSelect={onSelect} />)
+    render(
+      <TaskList
+        tasks={[{ id: '4', title: 'Build API', status: 'draft', evidence_count: 1 }]}
+        onSelect={onSelect}
+      />,
+    )
 
     expect(screen.getByText('1 evidence item')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /build api/i }))

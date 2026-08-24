@@ -15,7 +15,19 @@ describe('TaskDetailPage', () => {
       evidence: [],
     }
 
-    render(<TaskDetailPage task={task} saving={false} error="" notice="" onBack={vi.fn()} onCreateEvidence={onCreateEvidence} onSaveEvidence={vi.fn()} onGenerateEvidence={vi.fn()} onReviewSuggestion={vi.fn()} />)
+    render(
+      <TaskDetailPage
+        task={task}
+        saving={false}
+        error=""
+        notice=""
+        onBack={vi.fn()}
+        onCreateEvidence={onCreateEvidence}
+        onSaveEvidence={vi.fn()}
+        onGenerateEvidence={vi.fn()}
+        onReviewSuggestion={vi.fn()}
+      />,
+    )
 
     expect(screen.getByText('Met with a technical and non-technical audience.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Create evidence' }))

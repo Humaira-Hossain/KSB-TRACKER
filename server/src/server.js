@@ -28,7 +28,7 @@ app.use("/api", evidenceRoutes);
 app.use("/api", notesRoutes);
 app.use("/api", progressRoutes);
 
-app.use((error, _request, response, _next) => {
+app.use((error, _request, response) => {
   console.error(error);
   response.status(error.status || 500).json({ error: error.status ? error.message : "Internal server error." });
 });

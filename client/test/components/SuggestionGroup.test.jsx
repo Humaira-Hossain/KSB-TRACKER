@@ -17,16 +17,36 @@ describe('SuggestionGroup', () => {
       reviewStatus: 'suggested',
     }
 
-    render(<SuggestionGroup title="KSBs" type="ksb" evidence={evidence} items={[suggestion]} saving={false} onReview={onReview} />)
+    render(
+      <SuggestionGroup
+        title="KSBs"
+        type="ksb"
+        evidence={evidence}
+        items={[suggestion]}
+        saving={false}
+        onReview={onReview}
+      />,
+    )
 
-    expect(screen.getByText('All stages of the software development lifecycle.')).toBeInTheDocument()
+    expect(
+      screen.getByText('All stages of the software development lifecycle.'),
+    ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Accept' }))
 
     expect(onReview).toHaveBeenCalledWith(evidence, 'ksb', suggestion, 'accepted')
   })
 
   it('shows the reviewed state instead of action buttons', () => {
-    render(<SuggestionGroup title="Acceptance criteria" type="ac" evidence={{ id: '9' }} items={[{ id: '3', code: 'AC03', reviewStatus: 'rejected' }]} saving={false} onReview={vi.fn()} />)
+    render(
+      <SuggestionGroup
+        title="Acceptance criteria"
+        type="ac"
+        evidence={{ id: '9' }}
+        items={[{ id: '3', code: 'AC03', reviewStatus: 'rejected' }]}
+        saving={false}
+        onReview={vi.fn()}
+      />,
+    )
 
     expect(screen.getByText('rejected')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument()

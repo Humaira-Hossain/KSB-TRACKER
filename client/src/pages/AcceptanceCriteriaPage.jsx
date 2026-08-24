@@ -17,16 +17,19 @@ function AcceptanceCriteriaPage({ criteria, loading, error }) {
   const filteredCriteria = useMemo(() => {
     const query = codeFilter.trim().toLowerCase()
 
-    return criteria.filter((criterion) => (
-      (levelFilter === 'All levels' || criterion.level === levelFilter)
-      && (statusFilter === 'All statuses' || criterion.status === statusFilter)
-      && (!query || criterion.code.toLowerCase().includes(query))
-    ))
+    return criteria.filter(
+      (criterion) =>
+        (levelFilter === 'All levels' || criterion.level === levelFilter) &&
+        (statusFilter === 'All statuses' || criterion.status === statusFilter) &&
+        (!query || criterion.code.toLowerCase().includes(query)),
+    )
   }, [codeFilter, criteria, levelFilter, statusFilter])
 
   return (
     <main className="app-shell">
-      <Link className="text-button" to="/">← Dashboard</Link>
+      <Link className="text-button" to="/">
+        ← Dashboard
+      </Link>
 
       <section className="page-heading">
         <div>
@@ -36,9 +39,15 @@ function AcceptanceCriteriaPage({ criteria, loading, error }) {
         </div>
       </section>
 
-      {error && <p className="message error" role="alert">{error}</p>}
+      {error && (
+        <p className="message error" role="alert">
+          {error}
+        </p>
+      )}
 
-      {loading ? <p className="loading">Loading acceptance criteria…</p> : (
+      {loading ? (
+        <p className="loading">Loading acceptance criteria…</p>
+      ) : (
         <section className="panel">
           <div className="filter-bar ac-filter-bar">
             <label>
@@ -55,15 +64,22 @@ function AcceptanceCriteriaPage({ criteria, loading, error }) {
               Filter by level
               <select value={levelFilter} onChange={(event) => setLevelFilter(event.target.value)}>
                 <option>All levels</option>
-                {levels.map((level) => <option key={level}>{level}</option>)}
+                {levels.map((level) => (
+                  <option key={level}>{level}</option>
+                ))}
               </select>
             </label>
 
             <label>
               Filter by evidence status
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
                 <option>All statuses</option>
-                {statuses.map((status) => <option key={status}>{status}</option>)}
+                {statuses.map((status) => (
+                  <option key={status}>{status}</option>
+                ))}
               </select>
             </label>
           </div>
@@ -83,16 +99,22 @@ function AcceptanceCriteriaPage({ criteria, loading, error }) {
               <tbody>
                 {filteredCriteria.map((criterion) => (
                   <tr key={criterion.code}>
-                    <td><strong>{criterion.code}</strong></td>
+                    <td>
+                      <strong>{criterion.code}</strong>
+                    </td>
                     <td>{criterion.description}</td>
                     <td>{criterion.level || '—'}</td>
                     <td>{criterion.status}</td>
                     <td>{criterion.ksb_codes?.join(', ') || '—'}</td>
                     <td>
-                      {criterion.referencedIn.length === 0 ? '—' : (
+                      {criterion.referencedIn.length === 0 ? (
+                        '—'
+                      ) : (
                         <div className="task-links">
                           {criterion.referencedIn.map((task) => (
-                            <Link key={task.id} to={`/tasks/${task.id}`}>{task.title}</Link>
+                            <Link key={task.id} to={`/tasks/${task.id}`}>
+                              {task.title}
+                            </Link>
                           ))}
                         </div>
                       )}
@@ -103,7 +125,9 @@ function AcceptanceCriteriaPage({ criteria, loading, error }) {
             </table>
           </div>
 
-          {filteredCriteria.length === 0 && <p className="empty-state">No acceptance criteria match these filters.</p>}
+          {filteredCriteria.length === 0 && (
+            <p className="empty-state">No acceptance criteria match these filters.</p>
+          )}
         </section>
       )}
     </main>

@@ -8,15 +8,18 @@ function KsbDetailPage({ ksbs, loading, error }) {
   const filteredKsbs = useMemo(() => {
     const query = codeFilter.trim().toLowerCase()
 
-    return ksbs.filter((ksb) => (
-      (statusFilter === 'All' || ksb.status === statusFilter)
-      && (!query || ksb.code.toLowerCase().includes(query))
-    ))
+    return ksbs.filter(
+      (ksb) =>
+        (statusFilter === 'All' || ksb.status === statusFilter) &&
+        (!query || ksb.code.toLowerCase().includes(query)),
+    )
   }, [codeFilter, ksbs, statusFilter])
 
   return (
     <main className="app-shell">
-      <Link className="text-button" to="/">← Dashboard</Link>
+      <Link className="text-button" to="/">
+        ← Dashboard
+      </Link>
 
       <section className="page-heading">
         <div>
@@ -26,9 +29,15 @@ function KsbDetailPage({ ksbs, loading, error }) {
         </div>
       </section>
 
-      {error && <p className="message error" role="alert">{error}</p>}
+      {error && (
+        <p className="message error" role="alert">
+          {error}
+        </p>
+      )}
 
-      {loading ? <p className="loading">Loading KSBs…</p> : (
+      {loading ? (
+        <p className="loading">Loading KSBs…</p>
+      ) : (
         <section className="panel">
           <div className="filter-bar">
             <label>
@@ -43,7 +52,10 @@ function KsbDetailPage({ ksbs, loading, error }) {
 
             <label>
               Filter by status
-              <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value)}
+              >
                 <option>All</option>
                 <option>Referenced</option>
                 <option>Not referenced</option>
@@ -64,14 +76,20 @@ function KsbDetailPage({ ksbs, loading, error }) {
               <tbody>
                 {filteredKsbs.map((ksb) => (
                   <tr key={ksb.code}>
-                    <td><strong>{ksb.code}</strong></td>
+                    <td>
+                      <strong>{ksb.code}</strong>
+                    </td>
                     <td>{ksb.description}</td>
                     <td>{ksb.status}</td>
                     <td>
-                      {ksb.referencedIn.length === 0 ? '—' : (
+                      {ksb.referencedIn.length === 0 ? (
+                        '—'
+                      ) : (
                         <div className="task-links">
                           {ksb.referencedIn.map((task) => (
-                            <Link key={task.id} to={`/tasks/${task.id}`}>{task.title}</Link>
+                            <Link key={task.id} to={`/tasks/${task.id}`}>
+                              {task.title}
+                            </Link>
                           ))}
                         </div>
                       )}
