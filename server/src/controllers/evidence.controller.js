@@ -147,17 +147,15 @@ export async function createKsbLink(request, response, next) {
     requireChoice(reviewStatus, reviewStatuses, 'reviewStatus')
     if (suggestedBy === 'ai' && reviewStatus !== 'suggested')
       throw httpError(400, 'AI links must remain suggestions until you review them.')
-    response
-      .status(201)
-      .json(
-        (
-          await evidence.createKsbLink(evidenceId, ksbId, {
-            aiConfidence: request.body.aiConfidence ?? null,
-            suggestedBy,
-            reviewStatus,
-          })
-        ).rows[0],
-      )
+    response.status(201).json(
+      (
+        await evidence.createKsbLink(evidenceId, ksbId, {
+          aiConfidence: request.body.aiConfidence ?? null,
+          suggestedBy,
+          reviewStatus,
+        })
+      ).rows[0],
+    )
   } catch (error) {
     next(error)
   }
@@ -188,19 +186,17 @@ export async function createAcceptanceCriterionLink(request, response, next) {
         400,
         'Only an AI suggestion can recommend AC completion, and it must be reviewed by you.',
       )
-    response
-      .status(201)
-      .json(
-        (
-          await evidence.createAcceptanceCriterionLink(evidenceId, acId, {
-            aiConfidence: request.body.aiConfidence ?? null,
-            suggestedBy,
-            reviewStatus,
-            aiSuggestsComplete,
-            aiCompletionRationale: request.body.aiCompletionRationale ?? null,
-          })
-        ).rows[0],
-      )
+    response.status(201).json(
+      (
+        await evidence.createAcceptanceCriterionLink(evidenceId, acId, {
+          aiConfidence: request.body.aiConfidence ?? null,
+          suggestedBy,
+          reviewStatus,
+          aiSuggestsComplete,
+          aiCompletionRationale: request.body.aiCompletionRationale ?? null,
+        })
+      ).rows[0],
+    )
   } catch (error) {
     next(error)
   }
