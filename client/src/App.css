@@ -11,7 +11,8 @@
 .evidence-card > header,
 .task-card,
 .suggestion,
-.form-actions {
+.form-actions,
+.task-detail-actions {
   align-items: center;
   display: flex;
   gap: 16px;
@@ -147,6 +148,17 @@ select:focus {
 .evidence-list {
   display: grid;
   gap: 12px;
+}
+
+.archived-tasks {
+  border-top: 1px solid var(--border);
+  margin-top: 32px;
+  padding-top: 24px;
+}
+
+.archived-tasks h2 {
+  color: var(--text-h);
+  margin: 0 0 14px;
 }
 
 .metric-grid {

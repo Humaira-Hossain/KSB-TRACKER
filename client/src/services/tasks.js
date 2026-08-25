@@ -14,3 +14,14 @@ export function createTask(task) {
     body: JSON.stringify(task),
   })
 }
+
+export function updateTask(taskId, updates) {
+  return api(`/tasks/${taskId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(updates),
+  })
+}
+
+export function archiveTask(taskId) {
+  return api(`/tasks/${taskId}`, { method: 'DELETE' })
+}

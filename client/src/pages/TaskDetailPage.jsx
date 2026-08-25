@@ -1,5 +1,6 @@
 import EvidenceEditor from '../components/EvidenceEditor'
 import StatusBadge from '../components/StatusBadge'
+import TaskNotesEditor from '../components/TaskNotesEditor'
 
 function TaskDetailPage({
   task,
@@ -7,6 +8,9 @@ function TaskDetailPage({
   error,
   notice,
   onBack,
+  onArchiveTask,
+  onUnarchiveTask,
+  onSaveRawNotes,
   onCreateEvidence,
   onSaveEvidence,
   onGenerateEvidence,
@@ -25,7 +29,19 @@ function TaskDetailPage({
           <p className="eyebrow">Task evidence</p>
           <h1>{task.title}</h1>
         </div>
-        <StatusBadge status={task.status} />
+        <div className="task-detail-actions">
+          <StatusBadge status={task.status} />
+          {task.status !== 'archived' && (
+            <button className="reject" type="button" onClick={onArchiveTask} disabled={saving}>
+              Archive task
+            </button>
+          )}
+          {task.status === 'archived' && (
+            <button className="secondary" type="button" onClick={onUnarchiveTask} disabled={saving}>
+              Unarchive task
+            </button>
+          )}
+        </div>
       </section>
 
       {error && (
@@ -35,10 +51,12 @@ function TaskDetailPage({
       )}
       {notice && <p className="message success">{notice}</p>}
 
-      <section className="panel task-notes">
-        <h2>Rough notes</h2>
-        <p>{task.rawNotes}</p>
-      </section>
+      <TaskNotesEditor
+        key={`${task.id}-${task.rawNotes}`}
+        rawNotes={task.rawNotes}
+        saving={saving}
+        onSave={onSaveRawNotes}
+      />
 
       <section className="evidence-header">
         <div>

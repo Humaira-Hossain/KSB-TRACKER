@@ -7,7 +7,7 @@ import { getCatalogue } from '../src/services/catalogue'
 import { getAcceptanceCriteriaWithReferences } from '../src/services/acceptanceCriteria'
 import { getProgress } from '../src/services/progress'
 import { getKsbsWithReferences } from '../src/services/ksbs'
-import { getTask, getTasks } from '../src/services/tasks'
+import { archiveTask, getTask, getTasks, updateTask } from '../src/services/tasks'
 
 vi.mock('../src/services/catalogue', () => ({ getCatalogue: vi.fn() }))
 vi.mock('../src/services/acceptanceCriteria', () => ({
@@ -17,8 +17,10 @@ vi.mock('../src/services/progress', () => ({ getProgress: vi.fn() }))
 vi.mock('../src/services/ksbs', () => ({ getKsbsWithReferences: vi.fn() }))
 vi.mock('../src/services/tasks', () => ({
   createTask: vi.fn(),
+  archiveTask: vi.fn(),
   getTask: vi.fn(),
   getTasks: vi.fn(),
+  updateTask: vi.fn(),
 }))
 vi.mock('../src/services/evidence', () => ({
   createEvidence: vi.fn(),
@@ -44,6 +46,8 @@ beforeEach(() => {
     raw_notes: 'Some rough notes',
     evidence: [],
   })
+  updateTask.mockResolvedValue({ id: '7', raw_notes: 'Saved rough notes' })
+  archiveTask.mockResolvedValue({ id: '7', status: 'archived' })
 })
 
 describe('App routes', () => {
@@ -71,6 +75,63 @@ describe('App routes', () => {
 
     expect(await screen.findByRole('heading', { name: 'Direct URL task' })).toBeInTheDocument()
     expect(getTask).toHaveBeenCalledWith('7')
+  })
+
+  it('saves edited rough notes from the task detail page', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/tasks/7']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    const roughNotes = await screen.findByRole('textbox', { name: 'Rough notes' })
+    await user.click(screen.getByRole('button', { name: 'Edit rough notes' }))
+    await user.clear(roughNotes)
+    await user.type(roughNotes, 'Saved rough notes')
+    await user.click(screen.getByRole('button', { name: 'Save rough notes' }))
+
+    expect(updateTask).toHaveBeenCalledWith('7', { rawNotes: 'Saved rough notes' })
+    expect(await screen.findByText('Rough notes saved.')).toBeInTheDocument()
+  })
+
+  it('archives a task from its detail page and returns to the task list', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter initialEntries={['/tasks/7']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('heading', { name: 'Direct URL task' })
+    await user.click(screen.getByRole('button', { name: 'Archive task' }))
+
+    expect(archiveTask).toHaveBeenCalledWith('7')
+    expect(await screen.findByRole('heading', { name: 'Your tasks' })).toBeInTheDocument()
+  })
+
+  it('restores an archived task to draft status', async () => {
+    const user = userEvent.setup()
+    getTask.mockResolvedValueOnce({
+      id: '7',
+      title: 'Archived task',
+      status: 'archived',
+      raw_notes: 'Some rough notes',
+      evidence: [],
+    })
+    updateTask.mockResolvedValueOnce({ id: '7', status: 'draft' })
+
+    render(
+      <MemoryRouter initialEntries={['/tasks/7']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('heading', { name: 'Archived task' })
+    await user.click(screen.getByRole('button', { name: 'Unarchive task' }))
+
+    expect(updateTask).toHaveBeenCalledWith('7', { status: 'draft' })
+    expect(screen.getByRole('button', { name: 'Archive task' })).toBeInTheDocument()
   })
 
   it('navigates from the dashboard to the KSB detail page', async () => {

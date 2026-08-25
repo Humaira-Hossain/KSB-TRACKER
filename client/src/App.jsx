@@ -17,7 +17,7 @@ import {
 import { getProgress } from './services/progress'
 import { getAcceptanceCriteriaWithReferences } from './services/acceptanceCriteria'
 import { getKsbsWithReferences } from './services/ksbs'
-import { createTask, getTask, getTasks } from './services/tasks'
+import { archiveTask, createTask, getTask, getTasks, updateTask } from './services/tasks'
 import './App.css'
 
 const blankTask = { title: '', rawNotes: '' }
@@ -228,6 +228,69 @@ function App() {
     }
   }
 
+  async function handleSaveRawNotes(rawNotes) {
+    setSaving(true)
+    setError('')
+
+    try {
+      const updatedTask = await updateTask(selectedTask.id, { rawNotes })
+      setSelectedTask((task) => ({
+        ...task,
+        ...updatedTask,
+        rawNotes: updatedTask.rawNotes ?? updatedTask.raw_notes ?? rawNotes,
+      }))
+      setNotice('Rough notes saved.')
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleArchiveTask() {
+    setSaving(true)
+    setError('')
+
+    try {
+      const archivedTask = await archiveTask(selectedTask.id)
+      setSelectedTask((task) => ({ ...task, ...archivedTask, status: 'archived' }))
+      setTasks((items) =>
+        items.map((task) =>
+          String(task.id) === String(selectedTask.id)
+            ? { ...task, ...archivedTask, status: 'archived' }
+            : task,
+        ),
+      )
+      navigate('/tasks')
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleUnarchiveTask() {
+    setSaving(true)
+    setError('')
+
+    try {
+      const restoredTask = await updateTask(selectedTask.id, { status: 'draft' })
+      setSelectedTask((task) => ({ ...task, ...restoredTask, status: 'draft' }))
+      setTasks((items) =>
+        items.map((task) =>
+          String(task.id) === String(selectedTask.id)
+            ? { ...task, ...restoredTask, status: 'draft' }
+            : task,
+        ),
+      )
+      setNotice('Task restored to draft.')
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleSaveEvidence(evidence) {
     setSaving(true)
     setError('')
@@ -382,6 +445,9 @@ function App() {
             saving={saving}
             notice={notice}
             onBack={() => navigate('/tasks')}
+            onArchiveTask={handleArchiveTask}
+            onUnarchiveTask={handleUnarchiveTask}
+            onSaveRawNotes={handleSaveRawNotes}
             onCreateEvidence={handleCreateEvidence}
             onSaveEvidence={handleSaveEvidence}
             onGenerateEvidence={handleGenerateEvidence}

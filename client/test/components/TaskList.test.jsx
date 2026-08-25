@@ -26,4 +26,21 @@ describe('TaskList', () => {
 
     expect(screen.getByText('No tasks yet. Create your first task to begin.')).toBeInTheDocument()
   })
+
+  it('places archived tasks under an Archived subheading after active tasks', () => {
+    render(
+      <TaskList
+        tasks={[
+          { id: '4', title: 'Active task', status: 'draft', evidence_count: 1 },
+          { id: '5', title: 'Archived task', status: 'archived', evidence_count: 2 },
+        ]}
+        onSelect={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('heading', { name: 'Archived' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Archived tasks' })).toContainElement(
+      screen.getByRole('button', { name: /archived task/i }),
+    )
+  })
 })
