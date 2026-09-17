@@ -1,2 +1,5 @@
 AGENTS.md
-sql
+client/playwright-report/
+client/.env.e2e
+!client/.env.e2e.example
+client/test-results/
