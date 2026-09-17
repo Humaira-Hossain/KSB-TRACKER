@@ -13,6 +13,7 @@ function Metric({ label, value, detail }) {
 function DashboardPage({
   tasks,
   progress,
+  insights = { missingKsbs: [], incompleteAcceptanceCriteria: [] },
   loading,
   error,
   onCreateTask,
@@ -77,6 +78,56 @@ function DashboardPage({
               value={`${progress?.acceptance_criteria?.percentage ?? 0}%`}
               detail={`${acceptanceCriteriaComplete} of ${acceptanceCriteriaTotal} complete`}
             />
+          </section>
+
+          <section className="panel dashboard-insights">
+            <h2>Evidence still needed</h2>
+            <div className="insight-grid">
+              <div>
+                <h3>KSBs without completed evidence</h3>
+                {insights.missingKsbs.length ? (
+                  <ul>
+                    {insights.missingKsbs.slice(0, 5).map((ksb) => (
+                      <li key={ksb.code}>
+                        <strong>{ksb.code}</strong> — {ksb.description}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>All KSBs have completed evidence.</p>
+                )}
+                <button className="text-button" type="button" onClick={onViewKsbs}>
+                  See missing KSBs
+                </button>
+              </div>
+              <div>
+                <h3>Incomplete acceptance criteria</h3>
+                {insights.incompleteAcceptanceCriteria.length ? (
+                  <ul>
+                    {insights.incompleteAcceptanceCriteria.slice(0, 5).map((criterion) => (
+                      <li key={criterion.code}>
+                        <strong>{criterion.code}</strong> — {criterion.description}
+                        <br />
+                        <small>
+                          Required KSBs: {criterion.requiredKsbCodes?.join(', ') || 'None'}
+                        </small>
+                        <br />
+                        <small>
+                          {criterion.missingKsbCodes?.length
+                            ? `Still needed: ${criterion.missingKsbCodes.join(', ')}`
+                            : 'Required KSBs have completed evidence; link this evidence to the criterion.'}
+                        </small>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>All acceptance criteria are complete.</p>
+                )}
+                <button className="text-button" type="button" onClick={onViewAcceptanceCriteria}>
+                  See incomplete acceptance criteria
+                </button>
+              </div>
+            </div>
           </section>
 
           <section className="panel dashboard-next-step">

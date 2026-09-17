@@ -36,19 +36,68 @@ describe('SuggestionGroup', () => {
     expect(onReview).toHaveBeenCalledWith(evidence, 'ksb', suggestion, 'accepted')
   })
 
-  it('shows the reviewed state instead of action buttons', () => {
+  it('allows a rejected suggestion to be reconsidered', async () => {
+    const user = userEvent.setup()
+    const onReview = vi.fn()
+    const evidence = { id: '9' }
+    const item = { id: '3', code: 'AC03', reviewStatus: 'rejected' }
+
     render(
       <SuggestionGroup
         title="Acceptance criteria"
         type="ac"
-        evidence={{ id: '9' }}
-        items={[{ id: '3', code: 'AC03', reviewStatus: 'rejected' }]}
+        evidence={evidence}
+        items={[item]}
         saving={false}
-        onReview={vi.fn()}
+        onReview={onReview}
       />,
     )
 
-    expect(screen.getByText('rejected')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Reconsider' }))
+
+    expect(onReview).toHaveBeenCalledWith(evidence, 'ac', item, 'accepted')
+  })
+
+  it('allows a manually accepted link to be removed from progress', async () => {
+    const user = userEvent.setup()
+    const onReview = vi.fn()
+    const evidence = { id: '9' }
+    const item = { id: '1', code: 'K1', reviewStatus: 'accepted', suggestedBy: 'user' }
+
+    render(
+      <SuggestionGroup
+        title="KSBs"
+        type="ksb"
+        evidence={evidence}
+        items={[item]}
+        saving={false}
+        onReview={onReview}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Remove' }))
+    expect(onReview).toHaveBeenCalledWith(evidence, 'ksb', item, 'rejected')
+  })
+
+  it('allows an accepted AI suggestion to be removed from progress', async () => {
+    const user = userEvent.setup()
+    const onReview = vi.fn()
+    const evidence = { id: '9' }
+    const item = { id: '1', code: 'K1', reviewStatus: 'accepted', suggestedBy: 'ai' }
+
+    render(
+      <SuggestionGroup
+        title="KSBs"
+        type="ksb"
+        evidence={evidence}
+        items={[item]}
+        saving={false}
+        onReview={onReview}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Remove' }))
+
+    expect(onReview).toHaveBeenCalledWith(evidence, 'ksb', item, 'rejected')
   })
 })

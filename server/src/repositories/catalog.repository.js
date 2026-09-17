@@ -25,7 +25,46 @@ export async function getKsbDetails(id) {
 
 export async function listAcceptanceCriteria() {
   return pool.query(
-    `SELECT ac.id, ac.code, ac.level, ac.description, ac.keywords, COALESCE(array_agg(k.code ORDER BY k.code) FILTER (WHERE k.id IS NOT NULL), '{}') AS ksb_codes FROM acceptance_criteria ac LEFT JOIN acceptance_criteria_ksbs ack ON ack.acceptance_criteria_id = ac.id LEFT JOIN ksbs k ON k.id = ack.ksb_id GROUP BY ac.id ORDER BY ac.code`,
+    `SELECT
+      ac.id,
+      ac.code,
+      ac.level,
+      ac.description,
+      ac.keywords,
+      COALESCE(array_agg(k.code ORDER BY k.code) FILTER (WHERE k.id IS NOT NULL), '{}') AS ksb_codes,
+      (
+        EXISTS (
+          SELECT 1
+          FROM evidence_acceptance_criteria eac
+          JOIN evidence e ON e.id = eac.evidence_id
+          JOIN tasks t ON t.id = e.task_id
+          WHERE eac.acceptance_criteria_id = ac.id
+            AND eac.review_status = 'accepted'
+            AND t.status = 'completed'
+        )
+        AND NOT EXISTS (
+          SELECT 1
+          FROM acceptance_criteria_ksbs required_ksb
+          WHERE required_ksb.acceptance_criteria_id = ac.id
+            AND NOT EXISTS (
+              SELECT 1
+              FROM evidence_acceptance_criteria eac
+              JOIN evidence_ksbs ek ON ek.evidence_id = eac.evidence_id
+              JOIN evidence e ON e.id = eac.evidence_id
+              JOIN tasks t ON t.id = e.task_id
+              WHERE eac.acceptance_criteria_id = ac.id
+                AND eac.review_status = 'accepted'
+                AND ek.ksb_id = required_ksb.ksb_id
+                AND ek.review_status = 'accepted'
+                AND t.status = 'completed'
+            )
+        )
+      ) AS is_complete
+    FROM acceptance_criteria ac
+    LEFT JOIN acceptance_criteria_ksbs ack ON ack.acceptance_criteria_id = ac.id
+    LEFT JOIN ksbs k ON k.id = ack.ksb_id
+    GROUP BY ac.id
+    ORDER BY ac.code`,
   )
 }
 

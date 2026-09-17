@@ -5,25 +5,38 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../src/App'
 import { getCatalogue } from '../src/services/catalogue'
 import { getAcceptanceCriteriaWithReferences } from '../src/services/acceptanceCriteria'
-import { getProgress } from '../src/services/progress'
+import { getProgress, getProgressInsights } from '../src/services/progress'
 import { getKsbsWithReferences } from '../src/services/ksbs'
-import { archiveTask, getTask, getTasks, updateTask } from '../src/services/tasks'
+import {
+  archiveTask,
+  completeTask,
+  getTask,
+  getTasks,
+  reopenTask,
+  updateTask,
+} from '../src/services/tasks'
 
 vi.mock('../src/services/catalogue', () => ({ getCatalogue: vi.fn() }))
 vi.mock('../src/services/acceptanceCriteria', () => ({
   getAcceptanceCriteriaWithReferences: vi.fn(),
 }))
-vi.mock('../src/services/progress', () => ({ getProgress: vi.fn() }))
+vi.mock('../src/services/progress', () => ({ getProgress: vi.fn(), getProgressInsights: vi.fn() }))
 vi.mock('../src/services/ksbs', () => ({ getKsbsWithReferences: vi.fn() }))
 vi.mock('../src/services/tasks', () => ({
   createTask: vi.fn(),
   archiveTask: vi.fn(),
+  completeTask: vi.fn(),
+  reopenTask: vi.fn(),
   getTask: vi.fn(),
   getTasks: vi.fn(),
   updateTask: vi.fn(),
 }))
 vi.mock('../src/services/evidence', () => ({
+  approveEvidence: vi.fn(),
   createEvidence: vi.fn(),
+  createManualAcceptanceCriterionLink: vi.fn(),
+  createManualKsbLink: vi.fn(),
+  deleteEvidence: vi.fn(),
   generateEvidence: vi.fn(),
   reviewAcceptanceCriterionSuggestion: vi.fn(),
   reviewKsbSuggestion: vi.fn(),
@@ -38,6 +51,7 @@ beforeEach(() => {
     ksbs: { percentage: 0, evidenced: 0, total: 0 },
     acceptance_criteria: { percentage: 0, complete: 0, total: 0 },
   })
+  getProgressInsights.mockResolvedValue({ missingKsbs: [], incompleteAcceptanceCriteria: [] })
   getKsbsWithReferences.mockResolvedValue([])
   getTask.mockResolvedValue({
     id: '7',
@@ -48,6 +62,8 @@ beforeEach(() => {
   })
   updateTask.mockResolvedValue({ id: '7', raw_notes: 'Saved rough notes' })
   archiveTask.mockResolvedValue({ id: '7', status: 'archived' })
+  completeTask.mockResolvedValue({ id: '7', status: 'completed' })
+  reopenTask.mockResolvedValue({ id: '7', status: 'draft' })
 })
 
 describe('App routes', () => {
@@ -132,6 +148,56 @@ describe('App routes', () => {
 
     expect(updateTask).toHaveBeenCalledWith('7', { status: 'draft' })
     expect(screen.getByRole('button', { name: 'Archive task' })).toBeInTheDocument()
+  })
+
+  it('completes a task and refreshes dashboard progress', async () => {
+    const user = userEvent.setup()
+    getProgress
+      .mockResolvedValueOnce({
+        ksbs: { percentage: 0, evidenced: 0, total: 1 },
+        acceptance_criteria: { percentage: 0, complete: 0, total: 1 },
+      })
+      .mockResolvedValueOnce({
+        ksbs: { percentage: 100, evidenced: 1, total: 1 },
+        acceptance_criteria: { percentage: 100, complete: 1, total: 1 },
+      })
+
+    render(
+      <MemoryRouter initialEntries={['/tasks/7']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('heading', { name: 'Direct URL task' })
+    await user.click(screen.getByRole('button', { name: 'Mark task complete' }))
+
+    expect(completeTask).toHaveBeenCalledWith('7')
+    await user.click(screen.getByRole('button', { name: '← All tasks' }))
+    await user.click(screen.getByRole('button', { name: '← Dashboard' }))
+    expect(await screen.findByText('100% complete')).toBeInTheDocument()
+  })
+
+  it('reopens a completed task and refreshes progress', async () => {
+    const user = userEvent.setup()
+    getTask.mockResolvedValueOnce({
+      id: '7',
+      title: 'Completed task',
+      status: 'completed',
+      raw_notes: 'Final notes',
+      evidence: [],
+    })
+
+    render(
+      <MemoryRouter initialEntries={['/tasks/7']}>
+        <App />
+      </MemoryRouter>,
+    )
+
+    await screen.findByRole('heading', { name: 'Completed task' })
+    await user.click(screen.getByRole('button', { name: 'Reopen task' }))
+
+    expect(reopenTask).toHaveBeenCalledWith('7')
+    expect(screen.getByRole('button', { name: 'Edit rough notes' })).toBeInTheDocument()
   })
 
   it('navigates from the dashboard to the KSB detail page', async () => {

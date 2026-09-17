@@ -51,4 +51,35 @@ describe('DashboardPage', () => {
     expect(ksbSection).toHaveClass('dashboard-next-step')
     expect(ksbSection).toContainElement(screen.getByRole('button', { name: 'View KSBs' }))
   })
+
+  it('shows evidence gaps from the dashboard insights', () => {
+    render(
+      <DashboardPage
+        tasks={[]}
+        progress={{}}
+        insights={{
+          missingKsbs: [{ code: 'K4', description: 'Communication methods.' }],
+          incompleteAcceptanceCriteria: [
+            {
+              code: 'AC03',
+              description: 'Explain communication.',
+              requiredKsbCodes: ['K4', 'S15'],
+              missingKsbCodes: ['S15'],
+            },
+          ],
+        }}
+        loading={false}
+        error=""
+        onCreateTask={vi.fn()}
+        onViewTasks={vi.fn()}
+        onViewKsbs={vi.fn()}
+        onViewAcceptanceCriteria={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByText('K4')).toBeInTheDocument()
+    expect(screen.getByText('AC03')).toBeInTheDocument()
+    expect(screen.getByText('Still needed: S15')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Evidence still needed' })).toBeInTheDocument()
+  })
 })

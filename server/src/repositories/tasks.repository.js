@@ -17,13 +17,16 @@ export function getTaskWithEvidence(id) {
       COALESCE((
         SELECT jsonb_agg(jsonb_build_object(
           'id', e.id::text, 'title', e.title, 'status', e.status,
+          'ai_generated', e.ai_generated, 'user_reviewed', e.user_reviewed,
+          'reviewed_at', e.reviewed_at,
           'rawNotes', e.raw_notes, 'situation', e.situation, 'task', e.task,
           'action', e.action, 'result', e.result, 'createdAt', e.created_at,
           'updatedAt', e.updated_at,
           'acceptanceCriteria', COALESCE((
             SELECT jsonb_agg(jsonb_build_object(
               'id', ac.id::text, 'code', ac.code, 'description', ac.description,
-              'reviewStatus', eac.review_status
+              'reviewStatus', eac.review_status,
+              'suggestedBy', eac.suggested_by
             ) ORDER BY ac.code)
             FROM evidence_acceptance_criteria eac
             JOIN acceptance_criteria ac ON ac.id = eac.acceptance_criteria_id
@@ -32,7 +35,8 @@ export function getTaskWithEvidence(id) {
           'ksbs', COALESCE((
             SELECT jsonb_agg(jsonb_build_object(
               'id', k.id::text, 'code', k.code, 'type', k.type,
-              'description', k.description, 'reviewStatus', ek.review_status
+              'description', k.description, 'reviewStatus', ek.review_status,
+              'suggestedBy', ek.suggested_by
             ) ORDER BY k.code)
             FROM evidence_ksbs ek
             JOIN ksbs k ON k.id = ek.ksb_id
@@ -75,6 +79,13 @@ export function updateTask(id, updates) {
 export function completeTask(id) {
   return pool.query(
     "UPDATE tasks SET status = 'completed', completed_at = COALESCE(completed_at, NOW()) WHERE id = $1 RETURNING *",
+    [id],
+  )
+}
+
+export function reopenTask(id) {
+  return pool.query(
+    "UPDATE tasks SET status = 'draft', completed_at = NULL WHERE id = $1 AND status = 'completed' RETURNING *",
     [id],
   )
 }

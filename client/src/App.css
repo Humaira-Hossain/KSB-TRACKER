@@ -161,6 +161,14 @@ select:focus {
   margin: 0 0 14px;
 }
 
+.completion-summary h2 {
+  margin-top: 0;
+}
+
+.completion-summary p {
+  margin: 8px 0;
+}
+
 .metric-grid {
   display: grid;
   gap: 16px;
@@ -434,6 +442,33 @@ select:focus {
 .suggestions h3 {
   color: var(--text-h);
   margin: 0 0 14px;
+}
+
+.manual-links {
+  border-top: 1px solid var(--border);
+  margin-top: 26px;
+  padding-top: 20px;
+}
+
+.manual-links h3 {
+  color: var(--text-h);
+  margin: 0 0 6px;
+}
+
+.manual-links > p {
+  margin: 0;
+}
+
+.manual-link-controls {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-top: 16px;
+}
+
+.manual-link-controls label {
+  margin-top: 0;
 }
 
 .suggestion-group + .suggestion-group {

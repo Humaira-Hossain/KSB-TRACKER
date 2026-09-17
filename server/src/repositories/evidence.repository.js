@@ -8,6 +8,28 @@ export function getEvidence(id) {
   return pool.query('SELECT id FROM evidence WHERE id = $1', [id])
 }
 
+export function getEvidenceTaskStatus(id) {
+  return pool.query(
+    'SELECT e.id, t.status AS task_status FROM evidence e LEFT JOIN tasks t ON t.id = e.task_id WHERE e.id = $1',
+    [id],
+  )
+}
+
+export function deleteEvidence(id) {
+  return pool.query('DELETE FROM evidence WHERE id = $1', [id])
+}
+
+export function approveEvidence(id) {
+  return pool.query(
+    `UPDATE evidence SET status = 'approved', user_reviewed = TRUE, reviewed_at = NOW()
+     WHERE id = $1
+       AND NOT EXISTS (SELECT 1 FROM evidence_ksbs WHERE evidence_id = $1 AND review_status = 'suggested')
+       AND NOT EXISTS (SELECT 1 FROM evidence_acceptance_criteria WHERE evidence_id = $1 AND review_status = 'suggested')
+     RETURNING *`,
+    [id],
+  )
+}
+
 export function getEvidenceForGeneration(id) {
   return pool.query(
     'SELECT id, task_id, title, raw_notes, ai_generated FROM evidence WHERE id = $1',

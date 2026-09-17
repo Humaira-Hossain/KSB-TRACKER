@@ -25,3 +25,11 @@ export function updateTask(taskId, updates) {
 export function archiveTask(taskId) {
   return api(`/tasks/${taskId}`, { method: 'DELETE' })
 }
+
+export function completeTask(taskId) {
+  return api(`/tasks/${taskId}/complete`, { method: 'POST' })
+}
+
+export function reopenTask(taskId) {
+  return api(`/tasks/${taskId}/reopen`, { method: 'POST' })
+}

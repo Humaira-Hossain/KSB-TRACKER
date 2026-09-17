@@ -37,6 +37,11 @@ export async function createTask(request, response, next) {
 export async function updateTask(request, response, next) {
   try {
     const id = idFrom(request)
+    const currentTask = await tasks.getTask(id)
+    if (!currentTask.rowCount) throw httpError(404, 'Task not found.')
+    const isReopening = request.body.status === 'draft' && Object.keys(request.body).length === 1
+    if (currentTask.rows[0].status === 'completed' && !isReopening)
+      throw httpError(409, 'Reopen this task before making changes.')
     if (Object.hasOwn(request.body, 'title')) requireText(request.body.title, 'title')
     if (Object.hasOwn(request.body, 'rawNotes')) requireText(request.body.rawNotes, 'rawNotes')
     if (Object.hasOwn(request.body, 'status'))
@@ -49,6 +54,16 @@ export async function updateTask(request, response, next) {
     const result = await tasks.updateTask(id, updates)
     if (!result) throw httpError(400, 'Provide at least one field to update.')
     if (!result.rowCount) throw httpError(404, 'Task not found.')
+    response.json(result.rows[0])
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function reopenTask(request, response, next) {
+  try {
+    const result = await tasks.reopenTask(idFrom(request))
+    if (!result.rowCount) throw httpError(409, 'Only completed tasks can be reopened.')
     response.json(result.rows[0])
   } catch (error) {
     next(error)

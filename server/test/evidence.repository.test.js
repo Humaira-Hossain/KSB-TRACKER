@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict'
 import test, { afterEach } from 'node:test'
 import { pool } from '../src/db.js'
-import { saveGeneratedEvidence } from '../src/repositories/evidence.repository.js'
+import {
+  approveEvidence,
+  deleteEvidence,
+  saveGeneratedEvidence,
+} from '../src/repositories/evidence.repository.js'
 
 const originalConnect = pool.connect
 
@@ -47,6 +51,45 @@ test('saveGeneratedEvidence saves STAR and pending suggestions in one transactio
   assert.ok(calls.some((call) => call.text.startsWith('INSERT INTO evidence_acceptance_criteria')))
   assert.ok(calls.some((call) => call.text === 'COMMIT'))
   assert.equal(calls.at(-1).text, 'RELEASE')
+})
+
+test('deleteEvidence uses a parameterised delete query', async () => {
+  const originalQuery = pool.query
+  const calls = []
+  pool.query = async (text, values) => {
+    calls.push({ text, values })
+    return { rowCount: 1 }
+  }
+
+  try {
+    await deleteEvidence(9)
+  } finally {
+    pool.query = originalQuery
+  }
+
+  assert.deepEqual(calls, [{ text: 'DELETE FROM evidence WHERE id = $1', values: [9] }])
+})
+
+test('approveEvidence requires every linked suggestion to be reviewed', async () => {
+  const originalQuery = pool.query
+  const calls = []
+  pool.query = async (text, values) => {
+    calls.push({ text, values })
+    return { rowCount: 1 }
+  }
+
+  try {
+    await approveEvidence(9)
+  } finally {
+    pool.query = originalQuery
+  }
+
+  assert.equal(calls[0].values[0], 9)
+  assert.match(calls[0].text, /status = 'approved'/)
+  assert.match(calls[0].text, /user_reviewed = TRUE/)
+  assert.match(calls[0].text, /evidence_ksbs/)
+  assert.match(calls[0].text, /evidence_acceptance_criteria/)
+  assert.match(calls[0].text, /review_status = 'suggested'/)
 })
 
 test('saveGeneratedEvidence rolls back if the task already has generated STAR', async () => {

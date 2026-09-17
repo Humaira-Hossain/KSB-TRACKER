@@ -1,22 +1,30 @@
 import EvidenceEditor from '../components/EvidenceEditor'
 import StatusBadge from '../components/StatusBadge'
+import TaskCompletionSummary from '../components/TaskCompletionSummary'
 import TaskNotesEditor from '../components/TaskNotesEditor'
 
 function TaskDetailPage({
   task,
+  catalogue,
   saving,
   error,
   notice,
   onBack,
   onArchiveTask,
+  onCompleteTask,
   onUnarchiveTask,
   onSaveRawNotes,
   onCreateEvidence,
   onSaveEvidence,
   onGenerateEvidence,
   onReviewSuggestion,
+  onAddManualLink,
+  onDeleteEvidence,
+  onApproveEvidence,
+  onReopenTask,
 }) {
   const generationLocked = task.evidence.some((evidence) => evidence.ai_generated)
+  const readOnly = task.status === 'completed'
 
   return (
     <main className="app-shell">
@@ -41,6 +49,11 @@ function TaskDetailPage({
               Unarchive task
             </button>
           )}
+          {readOnly && (
+            <button className="secondary" type="button" onClick={onReopenTask} disabled={saving}>
+              Reopen task
+            </button>
+          )}
         </div>
       </section>
 
@@ -55,15 +68,24 @@ function TaskDetailPage({
         key={`${task.id}-${task.rawNotes}`}
         rawNotes={task.rawNotes}
         saving={saving}
+        readOnly={readOnly}
         onSave={onSaveRawNotes}
       />
+
+      {task.status !== 'completed' && task.status !== 'archived' && (
+        <TaskCompletionSummary
+          evidence={task.evidence}
+          saving={saving}
+          onComplete={onCompleteTask}
+        />
+      )}
 
       <section className="evidence-header">
         <div>
           <h2>Evidence</h2>
           <p>Create evidence from your task notes, then review the STAR response.</p>
         </div>
-        <button type="button" onClick={onCreateEvidence} disabled={saving}>
+        <button type="button" onClick={onCreateEvidence} disabled={saving || readOnly}>
           Create evidence
         </button>
       </section>
@@ -79,11 +101,16 @@ function TaskDetailPage({
           <EvidenceEditor
             key={`${evidence.id}-${evidence.updated_at}-${evidence.status}`}
             evidence={evidence}
+            catalogue={catalogue}
             saving={saving}
             generationLocked={generationLocked}
             onSave={onSaveEvidence}
             onGenerate={onGenerateEvidence}
             onReview={onReviewSuggestion}
+            onAddManualLink={onAddManualLink}
+            onDelete={onDeleteEvidence}
+            onApprove={onApproveEvidence}
+            readOnly={readOnly}
           />
         ))}
       </div>

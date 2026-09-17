@@ -36,6 +36,24 @@ function SuggestionGroup({ title, type, evidence, items, saving, onReview }) {
                   Reject
                 </button>
               </div>
+            ) : item.reviewStatus === 'accepted' ? (
+              <button
+                className="reject"
+                type="button"
+                onClick={() => onReview(evidence, type, item, 'rejected')}
+                disabled={saving}
+              >
+                Remove
+              </button>
+            ) : item.reviewStatus === 'rejected' ? (
+              <button
+                className="secondary"
+                type="button"
+                onClick={() => onReview(evidence, type, item, 'accepted')}
+                disabled={saving}
+              >
+                Reconsider
+              </button>
             ) : (
               <StatusBadge status={item.reviewStatus} />
             )}

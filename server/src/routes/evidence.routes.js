@@ -1,7 +1,9 @@
 import { Router } from 'express'
 import {
+  approveEvidence,
   createAcceptanceCriterionLink,
   createKsbLink,
+  deleteEvidence,
   generateEvidence,
   reviewAcceptanceCriterionLink,
   reviewKsbLink,
@@ -11,6 +13,8 @@ import {
 const router = Router()
 
 router.patch('/evidence/:id', updateEvidence)
+router.delete('/evidence/:id', deleteEvidence)
+router.post('/evidence/:id/approve', approveEvidence)
 router.post('/evidence/:id/generate', generateEvidence)
 router.post('/evidence/:id/ksbs', createKsbLink)
 router.post('/evidence/:id/acceptance-criteria', createAcceptanceCriterionLink)

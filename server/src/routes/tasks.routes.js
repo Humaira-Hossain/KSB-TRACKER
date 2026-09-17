@@ -5,6 +5,7 @@ import {
   createTask,
   getTask,
   listTasks,
+  reopenTask,
   updateTask,
 } from '../controllers/tasks.controller.js'
 import { createEvidence, listEvidenceForTask } from '../controllers/evidence.controller.js'
@@ -18,6 +19,7 @@ router.patch('/tasks/:id', updateTask)
 // DELETE archives rather than removes the task or its linked evidence.
 router.delete('/tasks/:id', archiveTask)
 router.post('/tasks/:id/complete', completeTask)
+router.post('/tasks/:id/reopen', reopenTask)
 router.get('/tasks/:taskId/evidence', listEvidenceForTask)
 router.post('/tasks/:taskId/evidence', createEvidence)
 

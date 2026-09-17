@@ -39,7 +39,7 @@ export async function getAcceptanceCriteriaWithReferences() {
 
     return {
       ...criterion,
-      status: getEvidenceStatus(evidence),
+      status: criterion.is_complete ? 'Complete' : getEvidenceStatus(evidence),
       referencedIn: getTaskReferences(evidence),
     }
   })

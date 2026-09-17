@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { api } from '../../src/services/api'
-import { archiveTask, updateTask } from '../../src/services/tasks'
+import { archiveTask, completeTask, reopenTask, updateTask } from '../../src/services/tasks'
 
 vi.mock('../../src/services/api', () => ({ api: vi.fn() }))
 
@@ -35,5 +35,29 @@ describe('archiveTask', () => {
     await expect(archiveTask('6')).resolves.toEqual({ id: '6', status: 'archived' })
 
     expect(api).toHaveBeenCalledWith('/tasks/6', { method: 'DELETE' })
+  })
+})
+
+describe('completeTask', () => {
+  beforeEach(() => {
+    api.mockReset()
+  })
+
+  it('uses the existing completion endpoint', async () => {
+    api.mockResolvedValue({ id: '6', status: 'completed' })
+
+    await expect(completeTask('6')).resolves.toEqual({ id: '6', status: 'completed' })
+
+    expect(api).toHaveBeenCalledWith('/tasks/6/complete', { method: 'POST' })
+  })
+})
+
+describe('reopenTask', () => {
+  it('reopens a completed task', async () => {
+    api.mockResolvedValue({ id: '6', status: 'draft' })
+
+    await reopenTask('6')
+
+    expect(api).toHaveBeenCalledWith('/tasks/6/reopen', { method: 'POST' })
   })
 })

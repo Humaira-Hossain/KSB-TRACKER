@@ -10,7 +10,7 @@ const criteria = [
     description: 'Plan delivery with stakeholders.',
     level: 'Pass',
     ksb_codes: ['K1'],
-    status: 'Accepted evidence',
+    status: 'Complete',
     referencedIn: [{ id: '7', title: 'Release planning' }],
   },
   {
@@ -53,14 +53,11 @@ describe('AcceptanceCriteriaPage', () => {
     expect(screen.queryByText('AC03')).not.toBeInTheDocument()
 
     await user.selectOptions(screen.getByLabelText('Filter by level'), 'All levels')
-    await user.selectOptions(
-      screen.getByLabelText('Filter by evidence status'),
-      'Accepted evidence',
-    )
+    await user.selectOptions(screen.getByLabelText('Filter by status'), 'Complete')
     expect(screen.getByText('AC03')).toBeInTheDocument()
     expect(screen.queryByText('DC01')).not.toBeInTheDocument()
 
-    await user.selectOptions(screen.getByLabelText('Filter by evidence status'), 'All statuses')
+    await user.selectOptions(screen.getByLabelText('Filter by status'), 'All statuses')
     await user.type(screen.getByLabelText('Filter by AC code'), 'dc01')
     expect(screen.getByText('DC01')).toBeInTheDocument()
     expect(screen.queryByText('AC03')).not.toBeInTheDocument()

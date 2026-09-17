@@ -9,6 +9,7 @@ describe('TaskDetailPage', () => {
     const onCreateEvidence = vi.fn()
     const onSaveRawNotes = vi.fn()
     const onArchiveTask = vi.fn()
+    const onCompleteTask = vi.fn()
     const task = {
       id: '6',
       title: 'Stakeholder update',
@@ -25,6 +26,7 @@ describe('TaskDetailPage', () => {
         notice=""
         onBack={vi.fn()}
         onArchiveTask={onArchiveTask}
+        onCompleteTask={onCompleteTask}
         onSaveRawNotes={onSaveRawNotes}
         onCreateEvidence={onCreateEvidence}
         onSaveEvidence={vi.fn()}
@@ -49,6 +51,9 @@ describe('TaskDetailPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Archive task' }))
     expect(onArchiveTask).toHaveBeenCalledOnce()
+
+    await user.click(screen.getByRole('button', { name: 'Mark task complete' }))
+    expect(onCompleteTask).toHaveBeenCalledOnce()
   })
 
   it('shows an unarchive action instead of archive for archived tasks', () => {
@@ -77,5 +82,34 @@ describe('TaskDetailPage', () => {
 
     expect(screen.getByRole('button', { name: 'Unarchive task' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Archive task' })).not.toBeInTheDocument()
+  })
+
+  it('locks editing for a completed task until it is reopened', () => {
+    render(
+      <TaskDetailPage
+        task={{
+          id: '8',
+          title: 'Completed task',
+          status: 'completed',
+          rawNotes: 'Final notes',
+          evidence: [],
+        }}
+        saving={false}
+        error=""
+        notice=""
+        onBack={vi.fn()}
+        onArchiveTask={vi.fn()}
+        onReopenTask={vi.fn()}
+        onSaveRawNotes={vi.fn()}
+        onCreateEvidence={vi.fn()}
+        onSaveEvidence={vi.fn()}
+        onGenerateEvidence={vi.fn()}
+        onReviewSuggestion={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('button', { name: 'Reopen task' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit rough notes' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Create evidence' })).toBeDisabled()
   })
 })

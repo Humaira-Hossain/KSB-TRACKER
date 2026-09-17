@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-function TaskNotesEditor({ rawNotes, saving, onSave }) {
+function TaskNotesEditor({ rawNotes, saving, readOnly = false, onSave }) {
   const [notes, setNotes] = useState(rawNotes)
   const [isEditing, setIsEditing] = useState(false)
 
@@ -24,7 +24,7 @@ function TaskNotesEditor({ rawNotes, saving, onSave }) {
         />
       </label>
       <div className="form-actions">
-        {isEditing ? (
+        {readOnly ? null : isEditing ? (
           <button type="submit" disabled={saving}>
             {saving ? 'Saving…' : 'Save rough notes'}
           </button>

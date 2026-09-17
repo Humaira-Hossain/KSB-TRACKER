@@ -15,8 +15,11 @@ async function requireTask(id) {
   if (!(await tasks.getTask(id)).rowCount) throw httpError(404, 'Task not found.')
 }
 
-async function requireEvidence(id) {
-  if (!(await evidence.getEvidence(id)).rowCount) throw httpError(404, 'Evidence not found.')
+async function requireEvidenceEditable(id) {
+  const result = await evidence.getEvidenceTaskStatus(id)
+  if (!result.rowCount) throw httpError(404, 'Evidence not found.')
+  if (result.rows[0].task_status === 'completed')
+    throw httpError(409, 'Reopen this task before changing its evidence.')
 }
 
 export async function listEvidenceForTask(request, response, next) {
@@ -33,6 +36,8 @@ export async function createEvidence(request, response, next) {
   try {
     const taskId = idFrom(request, 'taskId')
     await requireTask(taskId)
+    if ((await tasks.getTask(taskId)).rows[0].status === 'completed')
+      throw httpError(409, 'Reopen this task before changing its evidence.')
     const status = request.body.status ?? 'draft'
     requireChoice(status, evidenceStatuses, 'status')
     const result = await evidence.createEvidence(taskId, {
@@ -49,6 +54,7 @@ export async function createEvidence(request, response, next) {
 export async function updateEvidence(request, response, next) {
   try {
     const id = idFrom(request)
+    await requireEvidenceEditable(id)
     if (Object.hasOwn(request.body, 'title')) requireText(request.body.title, 'title')
     if (Object.hasOwn(request.body, 'status'))
       requireChoice(request.body.status, evidenceStatuses, 'status')
@@ -73,9 +79,35 @@ export async function updateEvidence(request, response, next) {
   }
 }
 
+export async function deleteEvidence(request, response, next) {
+  try {
+    const evidenceId = idFrom(request)
+    await requireEvidenceEditable(evidenceId)
+    const result = await evidence.deleteEvidence(evidenceId)
+    if (!result.rowCount) throw httpError(404, 'Evidence not found.')
+    response.status(204).end()
+  } catch (error) {
+    next(error)
+  }
+}
+
+export async function approveEvidence(request, response, next) {
+  try {
+    const evidenceId = idFrom(request)
+    await requireEvidenceEditable(evidenceId)
+    const result = await evidence.approveEvidence(evidenceId)
+    if (!result.rowCount)
+      throw httpError(409, 'Review all suggested KSBs and acceptance criteria before approving.')
+    response.json(result.rows[0])
+  } catch (error) {
+    next(error)
+  }
+}
+
 export async function generateEvidence(request, response, next) {
   try {
     const evidenceId = idFrom(request)
+    await requireEvidenceEditable(evidenceId)
     const evidenceResult = await evidence.getEvidenceForGeneration(evidenceId)
     if (!evidenceResult.rowCount) throw httpError(404, 'Evidence not found.')
     const sourceEvidence = evidenceResult.rows[0]
@@ -138,7 +170,7 @@ export async function createKsbLink(request, response, next) {
     const evidenceId = idFrom(request)
     const ksbId = Number(request.body.ksbId)
     if (!Number.isSafeInteger(ksbId) || ksbId < 1) throw httpError(400, 'ksbId is required.')
-    await requireEvidence(evidenceId)
+    await requireEvidenceEditable(evidenceId)
     if (!(await catalog.getKsb(ksbId)).rowCount) throw httpError(404, 'KSB not found.')
     const suggestedBy = request.body.suggestedBy ?? 'user'
     if (!['ai', 'user'].includes(suggestedBy)) throw httpError(400, 'Invalid suggestedBy.')
@@ -167,7 +199,7 @@ export async function createAcceptanceCriterionLink(request, response, next) {
     const acId = Number(request.body.acceptanceCriterionId)
     if (!Number.isSafeInteger(acId) || acId < 1)
       throw httpError(400, 'acceptanceCriterionId is required.')
-    await requireEvidence(evidenceId)
+    await requireEvidenceEditable(evidenceId)
     if (!(await catalog.getAcceptanceCriterion(acId)).rowCount)
       throw httpError(404, 'Acceptance criterion not found.')
     const suggestedBy = request.body.suggestedBy ?? 'user'
@@ -204,8 +236,10 @@ export async function createAcceptanceCriterionLink(request, response, next) {
 
 export async function reviewKsbLink(request, response, next) {
   try {
+    const evidenceId = idFrom(request)
+    await requireEvidenceEditable(evidenceId)
     const result = await evidence.reviewKsbLink(
-      idFrom(request),
+      evidenceId,
       idFrom(request, 'ksbId'),
       requireChoice(request.body.reviewStatus, reviewStatuses, 'reviewStatus'),
     )
@@ -218,8 +252,10 @@ export async function reviewKsbLink(request, response, next) {
 
 export async function reviewAcceptanceCriterionLink(request, response, next) {
   try {
+    const evidenceId = idFrom(request)
+    await requireEvidenceEditable(evidenceId)
     const result = await evidence.reviewAcceptanceCriterionLink(
-      idFrom(request),
+      evidenceId,
       idFrom(request, 'acId'),
       requireChoice(request.body.reviewStatus, reviewStatuses, 'reviewStatus'),
     )

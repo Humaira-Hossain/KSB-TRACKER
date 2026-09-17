@@ -8,16 +8,28 @@ import TaskDetailPage from './pages/TaskDetailPage'
 import TaskListPage from './pages/TaskListPage'
 import { getCatalogue } from './services/catalogue'
 import {
+  approveEvidence,
   createEvidence,
+  createManualAcceptanceCriterionLink,
+  createManualKsbLink,
+  deleteEvidence,
   generateEvidence,
   reviewAcceptanceCriterionSuggestion,
   reviewKsbSuggestion,
   updateEvidence,
 } from './services/evidence'
-import { getProgress } from './services/progress'
+import { getProgress, getProgressInsights } from './services/progress'
 import { getAcceptanceCriteriaWithReferences } from './services/acceptanceCriteria'
 import { getKsbsWithReferences } from './services/ksbs'
-import { archiveTask, createTask, getTask, getTasks, updateTask } from './services/tasks'
+import {
+  archiveTask,
+  completeTask,
+  createTask,
+  getTask,
+  getTasks,
+  updateTask,
+  reopenTask,
+} from './services/tasks'
 import './App.css'
 
 const blankTask = { title: '', rawNotes: '' }
@@ -66,6 +78,7 @@ function App() {
   const [selectedTask, setSelectedTask] = useState(null)
   const [catalogue, setCatalogue] = useState({ ksbs: [], acceptanceCriteria: [] })
   const [progress, setProgress] = useState(null)
+  const [insights, setInsights] = useState({ missingKsbs: [], incompleteAcceptanceCriteria: [] })
   const [ksbs, setKsbs] = useState([])
   const [acceptanceCriteria, setAcceptanceCriteria] = useState([])
   const [taskForm, setTaskForm] = useState(blankTask)
@@ -96,14 +109,16 @@ function App() {
     setError('')
 
     try {
-      const [taskList, loadedCatalogue, progressResult] = await Promise.all([
+      const [taskList, loadedCatalogue, progressResult, insightResult] = await Promise.all([
         getTasks(),
         getCatalogue(),
         getProgress(),
+        getProgressInsights(),
       ])
       setTasks(taskList)
       setCatalogue(loadedCatalogue)
       setProgress(progressResult)
+      setInsights(insightResult)
     } catch (requestError) {
       setError(requestError.message)
     } finally {
@@ -160,6 +175,13 @@ function App() {
       void Promise.resolve().then(loadAcceptanceCriteria)
     }
   }, [location.pathname, loadAcceptanceCriteria, loadKsbs])
+
+  useEffect(() => {
+    if (location.pathname !== '/') return
+    void getProgressInsights()
+      .then(setInsights)
+      .catch(() => {})
+  }, [location.pathname])
 
   async function handleCreateTask(event) {
     event.preventDefault()
@@ -291,6 +313,57 @@ function App() {
     }
   }
 
+  async function handleCompleteTask() {
+    setSaving(true)
+    setError('')
+
+    try {
+      const [completedTask, refreshedProgress] = await Promise.all([
+        completeTask(selectedTask.id),
+        getProgress(),
+      ])
+      setSelectedTask((task) => ({ ...task, ...completedTask, status: 'completed' }))
+      setTasks((items) =>
+        items.map((task) =>
+          String(task.id) === String(selectedTask.id)
+            ? { ...task, ...completedTask, status: 'completed' }
+            : task,
+        ),
+      )
+      setProgress(refreshedProgress)
+      setNotice('Task marked complete. Dashboard progress has been updated.')
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleReopenTask() {
+    setSaving(true)
+    setError('')
+    try {
+      const [reopenedTask, refreshedProgress] = await Promise.all([
+        reopenTask(selectedTask.id),
+        getProgress(),
+      ])
+      setSelectedTask((task) => ({ ...task, ...reopenedTask, status: 'draft' }))
+      setTasks((items) =>
+        items.map((task) =>
+          String(task.id) === String(selectedTask.id)
+            ? { ...task, ...reopenedTask, status: 'draft' }
+            : task,
+        ),
+      )
+      setProgress(refreshedProgress)
+      setNotice('Task reopened. You can now make changes.')
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   async function handleSaveEvidence(evidence) {
     setSaving(true)
     setError('')
@@ -307,6 +380,48 @@ function App() {
       setNotice('Evidence saved.')
     } catch (requestError) {
       setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleDeleteEvidence(evidenceId) {
+    setSaving(true)
+    setError('')
+
+    try {
+      await deleteEvidence(evidenceId)
+      setSelectedTask((task) => ({
+        ...task,
+        evidence: task.evidence.filter((item) => String(item.id) !== String(evidenceId)),
+      }))
+      setTasks((items) =>
+        items.map((task) =>
+          String(task.id) === String(selectedTask.id)
+            ? { ...task, evidence_count: Math.max(0, (task.evidence_count ?? 1) - 1) }
+            : task,
+        ),
+      )
+      setProgress(await getProgress())
+      setNotice('Evidence deleted. Its linked KSBs and acceptance criteria were removed too.')
+    } catch (requestError) {
+      setError(requestError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleApproveEvidence(evidence) {
+    setSaving(true)
+    setError('')
+    try {
+      const approvedEvidence = normaliseEvidence(await approveEvidence(evidence.id))
+      replaceEvidence(approvedEvidence)
+      setNotice('Evidence approved.')
+      return approvedEvidence
+    } catch (requestError) {
+      setError(requestError.message)
+      return false
     } finally {
       setSaving(false)
     }
@@ -370,9 +485,55 @@ function App() {
           }
         }),
       }))
-      setNotice(`${suggestion.code} was ${reviewStatus}.`)
+      try {
+        setProgress(await getProgress())
+        setNotice(`${suggestion.code} was ${reviewStatus}.`)
+      } catch {
+        setNotice(`${suggestion.code} was ${reviewStatus}. Progress will refresh next time.`)
+      }
+      return true
     } catch (requestError) {
       setError(requestError.message)
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleAddManualLink(evidence, type, item) {
+    setSaving(true)
+    setError('')
+
+    try {
+      if (type === 'ksb') await createManualKsbLink(evidence.id, item.id)
+      else await createManualAcceptanceCriterionLink(evidence.id, item.id)
+
+      const collection = type === 'ksb' ? 'ksbs' : 'acceptanceCriteria'
+      const manualLink = { ...item, reviewStatus: 'accepted', suggestedBy: 'user' }
+      setSelectedTask((task) => ({
+        ...task,
+        evidence: task.evidence.map((entry) =>
+          String(entry.id) === String(evidence.id)
+            ? {
+                ...entry,
+                [collection]: [
+                  ...entry[collection].filter((link) => String(link.id) !== String(item.id)),
+                  manualLink,
+                ],
+              }
+            : entry,
+        ),
+      }))
+      setNotice(`${item.code} was added as accepted evidence.`)
+      try {
+        setProgress(await getProgress())
+      } catch {
+        setNotice(`${item.code} was added as accepted evidence. Progress will refresh next time.`)
+      }
+      return true
+    } catch (requestError) {
+      setError(requestError.message)
+      return false
     } finally {
       setSaving(false)
     }
@@ -386,6 +547,7 @@ function App() {
           <DashboardPage
             tasks={tasks}
             progress={progress}
+            insights={insights}
             loading={loading}
             error={error}
             onCreateTask={() => navigate('/tasks/new')}
@@ -440,6 +602,7 @@ function App() {
         element={
           <TaskDetailRoute
             task={selectedTask}
+            catalogue={catalogue}
             loading={loading}
             error={error}
             saving={saving}
@@ -447,11 +610,16 @@ function App() {
             onBack={() => navigate('/tasks')}
             onArchiveTask={handleArchiveTask}
             onUnarchiveTask={handleUnarchiveTask}
+            onCompleteTask={handleCompleteTask}
+            onReopenTask={handleReopenTask}
             onSaveRawNotes={handleSaveRawNotes}
             onCreateEvidence={handleCreateEvidence}
             onSaveEvidence={handleSaveEvidence}
             onGenerateEvidence={handleGenerateEvidence}
             onReviewSuggestion={handleReviewSuggestion}
+            onAddManualLink={handleAddManualLink}
+            onDeleteEvidence={handleDeleteEvidence}
+            onApproveEvidence={handleApproveEvidence}
           />
         }
       />

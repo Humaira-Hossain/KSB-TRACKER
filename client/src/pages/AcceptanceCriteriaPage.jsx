@@ -71,7 +71,7 @@ function AcceptanceCriteriaPage({ criteria, loading, error }) {
             </label>
 
             <label>
-              Filter by evidence status
+              Filter by status
               <select
                 value={statusFilter}
                 onChange={(event) => setStatusFilter(event.target.value)}
@@ -91,7 +91,7 @@ function AcceptanceCriteriaPage({ criteria, loading, error }) {
                   <th scope="col">Criterion</th>
                   <th scope="col">Description</th>
                   <th scope="col">Level</th>
-                  <th scope="col">Evidence status</th>
+                  <th scope="col">Status</th>
                   <th scope="col">Required KSBs</th>
                   <th scope="col">Referenced in</th>
                 </tr>

@@ -12,7 +12,13 @@ describe('getAcceptanceCriteriaWithReferences', () => {
   it('keeps the criterion level and maps linked evidence to unique task references', async () => {
     api
       .mockResolvedValueOnce([
-        { code: 'AC03', level: 'Pass', description: 'Plan delivery.', ksb_codes: ['K1'] },
+        {
+          code: 'AC03',
+          level: 'Pass',
+          description: 'Plan delivery.',
+          ksb_codes: ['K1'],
+          is_complete: true,
+        },
         {
           code: 'DC01',
           level: 'Distinction',
@@ -33,7 +39,8 @@ describe('getAcceptanceCriteriaWithReferences', () => {
         level: 'Pass',
         description: 'Plan delivery.',
         ksb_codes: ['K1'],
-        status: 'Accepted evidence',
+        is_complete: true,
+        status: 'Complete',
         referencedIn: [{ id: '3', title: 'Planning' }],
       },
       {
